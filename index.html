@@ -303,7 +303,7 @@
     border-radius: 10px;
     padding: 28px 32px;
     margin-bottom: 32px;
-    line-height: 1.7;
+    max-width: 860px;
   }
 
   .analysis h2 {
@@ -313,28 +313,54 @@
     letter-spacing: -0.2px;
   }
 
-  .analysis p {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 12px;
+  .analysis .findings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
   }
 
-  .analysis p:last-child { margin-bottom: 0; }
+  .analysis .finding {
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 16px 18px;
+    line-height: 1.65;
+  }
+
+  .analysis .finding-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .analysis .finding-body {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
 
   .analysis strong { color: var(--text); font-weight: 600; }
   .analysis .paid-hl { color: var(--paid); font-weight: 600; }
   .analysis .seo-hl { color: var(--seo); font-weight: 600; }
   .analysis .conv-hl { color: var(--conversion); font-weight: 600; }
 
+  .analysis .note {
+    font-size: 11px;
+    color: var(--text-muted);
+    border-left: 2px solid var(--border);
+    padding-left: 12px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
   .analysis .top-list {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px 24px;
-    margin-top: 12px;
   }
 
   .analysis .top-list h3 {
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.6px;
     color: var(--text-muted);
@@ -353,6 +379,7 @@
   .analysis .top-list ol li span.cr { font-weight: 500; }
 
   @media (max-width: 900px) {
+    .analysis .findings-grid { grid-template-columns: 1fr; }
     .analysis .top-list { grid-template-columns: 1fr; }
   }
 
@@ -399,42 +426,52 @@
 <div class="analysis">
   <h2>Key Findings</h2>
 
-  <p style="font-size: 12px; color: var(--text-muted); border-left: 2px solid var(--border); padding-left: 12px; margin-bottom: 16px;">
+  <div class="note">
     <strong style="color: var(--text);">Conversion definition:</strong> after landing on an article, the visitor
     navigated to a key page (offres, produits, tarifs...), a product page, the contact page,
-    or the signup page. Note: some events are double-counted across categories, but this
-    does not materially affect the comparative analysis.
-  </p>
+    or the signup page. Some double-counting across categories; does not affect the comparison.
+  </div>
 
-  <p>
-    <strong>SEO converts significantly better than Paid.</strong>
-    Global conversion rate is <span class="seo-hl">2.7%</span> for SEO
-    vs <span class="paid-hl">1.7%</span> for Paid
-    -- SEO is <span class="conv-hl">+59%</span> higher in relative terms.
-    On 123 pages with events in both channels, SEO has a higher CR
-    on <span class="seo-hl">75</span> pages vs <span class="paid-hl">45</span> for Paid.
-  </p>
-
-  <p>
-    <strong>Engagement is nearly identical between channels.</strong>
-    On 137 pages with 100+ combined visitors, SEO has a lower bounce rate on
-    <span class="seo-hl">83</span> pages vs <span class="paid-hl">54</span> for Paid.
-    Time on page is similarly split: Paid wins on <span class="paid-hl">73</span> pages,
-    SEO on <span class="seo-hl">63</span>.
-  </p>
-
-  <p>
-    <strong>SEO converters are more engaged.</strong>
-    Visitors who trigger events fire <span class="seo-hl">7.0 events/converter</span> in SEO
-    vs <span class="paid-hl">5.9</span> in Paid, suggesting deeper interaction.
-    Total events: <span class="seo-hl">8,420</span> (SEO)
-    vs <span class="paid-hl">6,002</span> (Paid).
-  </p>
-
-  <p>
-    <strong>Paid drives more raw traffic</strong> (60,042 visitors)
-    <strong>vs SEO</strong> (45,053), but SEO delivers more conversions per visitor.
-  </p>
+  <div class="findings-grid">
+    <div class="finding">
+      <div class="finding-title">SEO converts better</div>
+      <div class="finding-body">
+        Global CR: <span class="seo-hl">2.7%</span> SEO
+        vs <span class="paid-hl">1.7%</span> Paid
+        (<span class="conv-hl">+59%</span> relative).<br>
+        On 123 pages with events in both channels,
+        SEO wins on <span class="seo-hl">75</span> pages
+        vs <span class="paid-hl">45</span>.
+      </div>
+    </div>
+    <div class="finding">
+      <div class="finding-title">Engagement is nearly identical</div>
+      <div class="finding-body">
+        On 137 pages with 100+ visitors:<br>
+        Lower bounce rate: SEO <span class="seo-hl">83</span>
+        vs Paid <span class="paid-hl">54</span>.<br>
+        Higher time on page: Paid <span class="paid-hl">73</span>
+        vs SEO <span class="seo-hl">63</span>.
+      </div>
+    </div>
+    <div class="finding">
+      <div class="finding-title">SEO converters are more engaged</div>
+      <div class="finding-body">
+        Events per converter: <span class="seo-hl">7.0</span> SEO
+        vs <span class="paid-hl">5.9</span> Paid.<br>
+        Total events: <span class="seo-hl">8,420</span> SEO
+        vs <span class="paid-hl">6,002</span> Paid.
+      </div>
+    </div>
+    <div class="finding">
+      <div class="finding-title">Paid drives more raw traffic</div>
+      <div class="finding-body">
+        <span class="paid-hl">60,042</span> visitors (Paid)
+        vs <span class="seo-hl">45,053</span> (SEO).<br>
+        But SEO delivers more conversions per visitor.
+      </div>
+    </div>
+  </div>
 
   <div class="top-list">
     <div>
