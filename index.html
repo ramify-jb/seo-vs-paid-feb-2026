@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ramify -- SEO vs Paid: Engagement &amp; Conversions</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0c0e13;
+    --surface: #14161d;
+    --surface-2: #1c1f28;
+    --border: #2a2d38;
+    --text: #e2e4ea;
+    --text-muted: #8b8f9e;
+    --paid: #f07c3e;
+    --paid-dim: rgba(240, 124, 62, 0.15);
+    --seo: #3ea5f0;
+    --seo-dim: rgba(62, 165, 240, 0.15);
+    --conversion: #a78bfa;
+    --conversion-dim: rgba(167, 139, 250, 0.15);
+    --positive: #34d399;
+    --negative: #f87171;
+    --neutral: #8b8f9e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 40px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    margin-bottom: 36px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .kpi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .kpi-values {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  .kpi-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 500;
+  }
+
+  .kpi-val.paid { color: var(--paid); }
+  .kpi-val.seo { color: var(--seo); }
+  .kpi-val.conversion { color: var(--conversion); }
+
+  .kpi-channel {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .kpi-group { text-align: center; }
+
+  .vs { color: var(--text-muted); font-size: 14px; align-self: center; }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .control-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+
+  select, input[type="text"] {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  select:focus, input[type="text"]:focus {
+    border-color: var(--seo);
+  }
+
+  input[type="text"] { width: 220px; }
+
+  .chart-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .chart-section.triple {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+  }
+
+  .chart-card h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: -0.2px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 340px;
+  }
+
+  .table-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 20px 24px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .table-header h2 {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .page-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  thead th:hover { color: var(--text); }
+  thead th.sorted { color: var(--text); }
+  thead th .arrow { margin-left: 4px; font-size: 10px; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: var(--surface-2); }
+
+  td {
+    padding: 10px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  td.page-cell {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    max-width: 350px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .tag.positive { background: rgba(52, 211, 153, 0.12); color: var(--positive); }
+  .tag.negative { background: rgba(248, 113, 113, 0.12); color: var(--negative); }
+  .tag.neutral { background: rgba(139, 143, 158, 0.1); color: var(--neutral); }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .legend-dot.paid { background: var(--paid); }
+  .legend-dot.seo { background: var(--seo); }
+  .legend-dot.conversion { background: var(--conversion); }
+
+  .scatter-info {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  .analysis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+    line-height: 1.7;
+  }
+
+  .analysis h2 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: -0.2px;
+  }
+
+  .analysis p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .analysis p:last-child { margin-bottom: 0; }
+
+  .analysis strong { color: var(--text); font-weight: 600; }
+  .analysis .paid-hl { color: var(--paid); font-weight: 600; }
+  .analysis .seo-hl { color: var(--seo); font-weight: 600; }
+  .analysis .conv-hl { color: var(--conversion); font-weight: 600; }
+
+  .analysis .top-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 24px;
+    margin-top: 12px;
+  }
+
+  .analysis .top-list h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .analysis .top-list ol {
+    padding-left: 18px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .analysis .top-list ol li { margin-bottom: 3px; }
+  .analysis .top-list ol li span.cr { font-weight: 500; }
+
+  @media (max-width: 900px) {
+    .analysis .top-list { grid-template-columns: 1fr; }
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 36px 0 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    letter-spacing: -0.2px;
+  }
+
+  .bar-chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 1200px) {
+    .chart-section.triple { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 900px) {
+    .chart-section { grid-template-columns: 1fr; }
+    .bar-chart-row { grid-template-columns: 1fr; }
+    body { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>SEO vs Paid -- Engagement &amp; Conversions</h1>
+  <span class="subtitle">Ramify -- 396 pages (300 in both channels)</span>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot paid"></div>Paid</div>
+  <div class="legend-item"><div class="legend-dot seo"></div>SEO</div>
+</div>
+
+<!-- ANALYSIS -->
+<div class="analysis">
+  <h2>Key Findings</h2>
+
+  <p style="font-size: 12px; color: var(--text-muted); border-left: 2px solid var(--border); padding-left: 12px; margin-bottom: 16px;">
+    <strong style="color: var(--text);">Conversion definition:</strong> after landing on an article, the visitor
+    navigated to a key page (offres, produits, tarifs...), a product page, the contact page,
+    or the signup page. Note: some events are double-counted across categories, but this
+    does not materially affect the comparative analysis.
+  </p>
+
+  <p>
+    <strong>SEO converts significantly better than Paid.</strong>
+    Global conversion rate is <span class="seo-hl">2.7%</span> for SEO
+    vs <span class="paid-hl">1.7%</span> for Paid
+    -- SEO is <span class="conv-hl">+59%</span> higher in relative terms.
+    On 123 pages with events in both channels, SEO has a higher CR
+    on <span class="seo-hl">75</span> pages vs <span class="paid-hl">45</span> for Paid.
+  </p>
+
+  <p>
+    <strong>Engagement is nearly identical between channels.</strong>
+    On 137 pages with 100+ combined visitors, SEO has a lower bounce rate on
+    <span class="seo-hl">83</span> pages vs <span class="paid-hl">54</span> for Paid.
+    Time on page is similarly split: Paid wins on <span class="paid-hl">73</span> pages,
+    SEO on <span class="seo-hl">63</span>.
+  </p>
+
+  <p>
+    <strong>SEO converters are more engaged.</strong>
+    Visitors who trigger events fire <span class="seo-hl">7.0 events/converter</span> in SEO
+    vs <span class="paid-hl">5.9</span> in Paid, suggesting deeper interaction.
+    Total events: <span class="seo-hl">8,420</span> (SEO)
+    vs <span class="paid-hl">6,002</span> (Paid).
+  </p>
+
+  <p>
+    <strong>Paid drives more raw traffic</strong> (60,042 visitors)
+    <strong>vs SEO</strong> (45,053), but SEO delivers more conversions per visitor.
+  </p>
+
+  <div class="top-list">
+    <div>
+      <h3>Top converting pages -- Paid</h3>
+      <ol><li>scpi-edmond-de-rothschild-europa <span class="cr paid-hl">11.1%</span></li><li>meilleur <span class="cr paid-hl">8.2%</span></li><li>diversifier <span class="cr paid-hl">7.8%</span></li><li>scpi-immorente <span class="cr paid-hl">7.3%</span></li><li>scpi-comete <span class="cr paid-hl">7.0%</span></li></ol>
+    </div>
+    <div>
+      <h3>Top converting pages -- SEO</h3>
+      <ol><li>pea <span class="cr seo-hl">34.7%</span></li><li>avis <span class="cr seo-hl">24.8%</span></li><li>assurance-vie <span class="cr seo-hl">14.8%</span></li><li>private-equity <span class="cr seo-hl">14.5%</span></li><li>fips-x-fund <span class="cr seo-hl">13.6%</span></li></ol>
+    </div>
+  </div>
+</div>
+
+<!-- ENGAGEMENT KPIs -->
+<div class="kpi-row" id="kpis"></div>
+
+<div class="controls">
+  <div class="control-group">
+    <span class="control-label">Sort by</span>
+    <select id="sortSelect">
+      <option value="visitors">Total visitors</option>
+      <option value="br_delta">Bounce rate delta</option>
+      <option value="time_delta">Time on page delta</option>
+      <option value="cr_paid">Conv. rate (Paid)</option>
+      <option value="cr_seo">Conv. rate (SEO)</option>
+      <option value="cr_delta">Conv. rate delta</option>
+      <option value="events_paid">Events (Paid)</option>
+      <option value="events_seo">Events (SEO)</option>
+    </select>
+  </div>
+  <div class="control-group">
+    <span class="control-label">Filter</span>
+    <input type="text" id="filterInput" placeholder="Type to filter pages...">
+  </div>
+  <div class="control-group">
+    <span class="control-label">Min visitors</span>
+    <select id="minVisitors">
+      <option value="0">All</option>
+      <option value="50">50+</option>
+      <option value="100" selected>100+</option>
+      <option value="250">250+</option>
+      <option value="500">500+</option>
+      <option value="1000">1000+</option>
+    </select>
+  </div>
+</div>
+
+<!-- ENGAGEMENT CHARTS -->
+<div class="chart-section">
+  <div class="chart-card">
+    <h2>Bounce Rate Distribution</h2>
+    <div class="chart-wrap"><canvas id="bounceScatter"></canvas></div>
+    <div class="scatter-info">Each dot = one page. Above the diagonal = higher bounce in Paid.</div>
+  </div>
+  <div class="chart-card">
+    <h2>Time on Page Distribution</h2>
+    <div class="chart-wrap"><canvas id="timeScatter"></canvas></div>
+    <div class="scatter-info">Each dot = one page. Above the diagonal = longer time in Paid.</div>
+  </div>
+</div>
+
+<!-- CONVERSION SECTION -->
+<div class="section-title">Conversion Events</div>
+
+<div class="kpi-row" id="convKpis"></div>
+
+<div class="bar-chart-row">
+  <div class="chart-card">
+    <h2>Top 20 Pages by Events (Paid)</h2>
+    <div class="chart-wrap"><canvas id="topEventsPaid"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h2>Top 20 Pages by Events (SEO)</h2>
+    <div class="chart-wrap"><canvas id="topEventsSeo"></canvas></div>
+  </div>
+</div>
+
+<div class="chart-section">
+  <div class="chart-card">
+    <h2>Conversion Rate: SEO vs Paid</h2>
+    <div class="chart-wrap"><canvas id="convScatter"></canvas></div>
+    <div class="scatter-info">Each dot = one page. Above diagonal = higher conv. rate in Paid. Size = total events.</div>
+  </div>
+  <div class="chart-card">
+    <h2>Events vs Visitors (both channels)</h2>
+    <div class="chart-wrap"><canvas id="eventsVsVisitors"></canvas></div>
+    <div class="scatter-info">Orange = Paid, Blue = SEO. Slope indicates conversion rate.</div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="table-section">
+  <div class="table-header">
+    <h2>Page-by-page Comparison</h2>
+    <span class="page-count" id="pageCount"></span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-col="page">Page</th>
+          <th data-col="br_paid">BR Paid</th>
+          <th data-col="br_seo">BR SEO</th>
+          <th data-col="br_delta">BR Delta</th>
+          <th data-col="time_paid">Time Paid</th>
+          <th data-col="time_seo">Time SEO</th>
+          <th data-col="time_delta">Time Delta</th>
+          <th data-col="events_paid">Ev. Paid</th>
+          <th data-col="events_seo">Ev. SEO</th>
+          <th data-col="cr_paid">CR Paid</th>
+          <th data-col="cr_seo">CR SEO</th>
+          <th data-col="cr_delta">CR Delta</th>
+          <th data-col="visitors_paid">Vis. Paid</th>
+          <th data-col="visitors_seo">Vis. SEO</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const DATA = {"pages": [{"page": "/IE000I8KRLL9-vie/fiscalite", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0, "cr_delta": 0}, {"page": "/assurance-vie", "br_paid": 0.865013774105, "br_seo": 0.238095238095, "br_delta": 0.6, "time_paid": 119, "time_seo": 93, "time_delta": 26, "visitors_paid": 390, "visitors_seo": 88, "events_paid": 5, "events_seo": 81, "ev_visitors_paid": 2, "ev_visitors_seo": 13, "cr_paid": 0.5, "cr_seo": 14.8, "cr_delta": -14.3}, {"page": "/assurance-vie/choisir", "br_paid": 0.821428571429, "br_seo": 0.571428571429, "br_delta": 0.2, "time_paid": 134, "time_seo": 47, "time_delta": 87, "visitors_paid": 33, "visitors_seo": 12, "events_paid": 12, "events_seo": 45, "ev_visitors_paid": 2, "ev_visitors_seo": 2, "cr_paid": 6.1, "cr_seo": 16.7, "cr_delta": -10.6}, {"page": "/assurance-vie/enfant-mineur", "br_paid": 0.840236686391, "br_seo": 0.439024390244, "br_delta": 0.4, "time_paid": 89, "time_seo": 93, "time_delta": -4, "visitors_paid": 170, "visitors_seo": 45, "events_paid": 29, "events_seo": 47, "ev_visitors_paid": 5, "ev_visitors_seo": 10, "cr_paid": 2.9, "cr_seo": 22.2, "cr_delta": -19.3}, {"page": "/assurance-vie/etf", "br_paid": 0.706896551724, "br_seo": 0.615384615385, "br_delta": 0.1, "time_paid": 107, "time_seo": 84, "time_delta": 23, "visitors_paid": 80, "visitors_seo": 245, "events_paid": 29, "events_seo": 120, "ev_visitors_paid": 4, "ev_visitors_seo": 14, "cr_paid": 5.0, "cr_seo": 5.7, "cr_delta": -0.7}, {"page": "/assurance-vie/fiscalite", "br_paid": 0.843113482056, "br_seo": 0.583333333333, "br_delta": 0.3, "time_paid": 136, "time_seo": 181, "time_delta": -45, "visitors_paid": 4063, "visitors_seo": 38, "events_paid": 370, "events_seo": 0, "ev_visitors_paid": 38, "ev_visitors_seo": 0, "cr_paid": 0.9, "cr_seo": 0.0, "cr_delta": 0.9}, {"page": "/assurance-vie/frais", "br_paid": 0.88064516129, "br_seo": 0.623853211009, "br_delta": 0.3, "time_paid": 109, "time_seo": 115, "time_delta": -6, "visitors_paid": 365, "visitors_seo": 138, "events_paid": 78, "events_seo": 194, "ev_visitors_paid": 3, "ev_visitors_seo": 9, "cr_paid": 0.8, "cr_seo": 6.5, "cr_delta": -5.7}, {"page": "/assurance-vie/gestion-libre-ou-pilotee", "br_paid": 0.851851851852, "br_seo": 0.294117647059, "br_delta": 0.6, "time_paid": 71, "time_seo": 126, "time_delta": -55, "visitors_paid": 35, "visitors_seo": 44, "events_paid": 0, "events_seo": 122, "ev_visitors_paid": 0, "ev_visitors_seo": 11, "cr_paid": 0.0, "cr_seo": 25.0, "cr_delta": -25.0}, {"page": "/assurance-vie/luxembourg-fiscalite", "br_paid": 0.809523809524, "br_seo": 0.8125, "br_delta": -0.0, "time_paid": 47, "time_seo": 117, "time_delta": -70, "visitors_paid": 44, "visitors_seo": 17, "events_paid": 4, "events_seo": 1, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 2.3, "cr_seo": 5.9, "cr_delta": -3.6}, {"page": "/assurance-vie/luxembourgeoise", "br_paid": 0.897435897436, "br_seo": 0.380952380952, "br_delta": 0.5, "time_paid": 79, "time_seo": 114, "time_delta": -35, "visitors_paid": 47, "visitors_seo": 39, "events_paid": 4, "events_seo": 34, "ev_visitors_paid": 2, "ev_visitors_seo": 7, "cr_paid": 4.3, "cr_seo": 17.9, "cr_delta": -13.6}, {"page": "/assurance-vie/luxembourgeoise-choisir", "br_paid": 0.875, "br_seo": 0.586206896552, "br_delta": 0.3, "time_paid": 103, "time_seo": 124, "time_delta": -21, "visitors_paid": 19, "visitors_seo": 36, "events_paid": 1, "events_seo": 43, "ev_visitors_paid": 1, "ev_visitors_seo": 5, "cr_paid": 5.3, "cr_seo": 13.9, "cr_delta": -8.6}, {"page": "/assurance-vie/meilleure", "br_paid": 0.843416370107, "br_seo": 0.551282051282, "br_delta": 0.3, "time_paid": 76, "time_seo": 151, "time_delta": -75, "visitors_paid": 615, "visitors_seo": 127, "events_paid": 206, "events_seo": 74, "ev_visitors_paid": 21, "ev_visitors_seo": 6, "cr_paid": 3.4, "cr_seo": 4.7, "cr_delta": -1.3}, {"page": "/assurance-vie/meilleures-luxembourgeoises", "br_paid": 0.798165137615, "br_seo": 0.507042253521, "br_delta": 0.3, "time_paid": 119, "time_seo": 113, "time_delta": 6, "visitors_paid": 209, "visitors_seo": 82, "events_paid": 37, "events_seo": 145, "ev_visitors_paid": 12, "ev_visitors_seo": 10, "cr_paid": 5.7, "cr_seo": 12.2, "cr_delta": -6.5}, {"page": "/assurance-vie/ou-contrat-de-capitalisation", "br_paid": 0.850374064838, "br_seo": 0.875, "br_delta": -0.0, "time_paid": 111, "time_seo": 63, "time_delta": 48, "visitors_paid": 412, "visitors_seo": 13, "events_paid": 67, "events_seo": 0, "ev_visitors_paid": 17, "ev_visitors_seo": 0, "cr_paid": 4.1, "cr_seo": 0.0, "cr_delta": 4.1}, {"page": "/assurance-vie/perte-argent", "br_paid": 0.75, "br_seo": 0.892720306513, "br_delta": -0.1, "time_paid": 125, "time_seo": 91, "time_delta": 34, "visitors_paid": 19, "visitors_seo": 1034, "events_paid": 0, "events_seo": 82, "ev_visitors_paid": 0, "ev_visitors_seo": 18, "cr_paid": 0.0, "cr_seo": 1.7, "cr_delta": -1.7}, {"page": "/assurance-vie/rendement", "br_paid": 0.789473684211, "br_seo": 0.75, "br_delta": 0.0, "time_paid": 129, "time_seo": 112, "time_delta": 17, "visitors_paid": 21, "visitors_seo": 59, "events_paid": 0, "events_seo": 19, "ev_visitors_paid": 0, "ev_visitors_seo": 3, "cr_paid": 0.0, "cr_seo": 5.1, "cr_delta": -5.1}, {"page": "/assurance-vie/retrait-assurance-vie-8-ans", "br_paid": 0.848047084002, "br_seo": 0.850279329609, "br_delta": -0.0, "time_paid": 80, "time_seo": 74, "time_delta": 6, "visitors_paid": 3694, "visitors_seo": 860, "events_paid": 103, "events_seo": 22, "ev_visitors_paid": 37, "ev_visitors_seo": 7, "cr_paid": 1.0, "cr_seo": 0.8, "cr_delta": 0.2}, {"page": "/assurance-vie/succession", "br_paid": 0.90180878553, "br_seo": 0.571428571429, "br_delta": 0.3, "time_paid": 115, "time_seo": 188, "time_delta": -73, "visitors_paid": 6028, "visitors_seo": 29, "events_paid": 238, "events_seo": 0, "ev_visitors_paid": 45, "ev_visitors_seo": 0, "cr_paid": 0.7, "cr_seo": 0.0, "cr_delta": 0.7}, {"page": "/assurance-vie/transfert", "br_paid": 0.841463414634, "br_seo": 0.877192982456, "br_delta": -0.0, "time_paid": 112, "time_seo": 67, "time_delta": 45, "visitors_paid": 174, "visitors_seo": 120, "events_paid": 36, "events_seo": 21, "ev_visitors_paid": 3, "ev_visitors_seo": 3, "cr_paid": 1.7, "cr_seo": 2.5, "cr_delta": -0.8}, {"page": "/assurance-vie/unites-de-compte-ou-fonds-euros", "br_paid": 0.876404494382, "br_seo": 0.75, "br_delta": 0.1, "time_paid": 106, "time_seo": 111, "time_delta": -5, "visitors_paid": 266, "visitors_seo": 14, "events_paid": 15, "events_seo": 24, "ev_visitors_paid": 2, "ev_visitors_seo": 2, "cr_paid": 0.8, "cr_seo": 14.3, "cr_delta": -13.5}, {"page": "/avis", "br_paid": 0.0, "br_seo": 0.406593406593, "br_delta": -0.4, "time_paid": 535, "time_seo": 110, "time_delta": 425, "visitors_paid": 1, "visitors_seo": 113, "events_paid": 0, "events_seo": 529, "ev_visitors_paid": 0, "ev_visitors_seo": 28, "cr_paid": 0.0, "cr_seo": 24.8, "cr_delta": -24.8}, {"page": "/avis/axclimat-1", "br_paid": 0.0, "br_seo": 0.714285714286, "br_delta": -0.7, "time_paid": 0, "time_seo": 74, "time_delta": -74, "visitors_paid": 0, "visitors_seo": 15, "events_paid": 0, "events_seo": 57, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0, "cr_seo": 13.3, "cr_delta": -13.3}, {"page": "/avis/fcpi-dividendes-plus-n12", "br_paid": 0.666666666667, "br_seo": 0.25, "br_delta": 0.4, "time_paid": 20, "time_seo": 15, "time_delta": 5, "visitors_paid": 3, "visitors_seo": 4, "events_paid": 1, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 33.3, "cr_seo": 0.0, "cr_delta": 33.3}, {"page": "/avis/fcpi-eurazeo-ambition-europe-2025", "br_paid": 0.666666666667, "br_seo": 0.8125, "br_delta": -0.1, "time_paid": 40, "time_seo": 107, "time_delta": -67, "visitors_paid": 6, "visitors_seo": 16, "events_paid": 0, "events_seo": 6, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 6.2, "cr_delta": -6.2}, {"page": "/avis/fcpi-eurazeo-patrimoine-2024", "br_paid": 0.8, "br_seo": 1.0, "br_delta": -0.2, "time_paid": 6, "time_seo": 7, "time_delta": -1, "visitors_paid": 5, "visitors_seo": 2, "events_paid": 10, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 20.0, "cr_seo": 0.0, "cr_delta": 20.0}, {"page": "/avis/fcpr-123-corporate-2024", "br_paid": 1.0, "br_seo": 0.833333333333, "br_delta": 0.2, "time_paid": 37, "time_seo": 32, "time_delta": 5, "visitors_paid": 3, "visitors_seo": 7, "events_paid": 0, "events_seo": 15, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 14.3, "cr_delta": -14.3}, {"page": "/avis/fcpr-anaxago-society-2023", "br_paid": 0.0, "br_seo": 0.571428571429, "br_delta": -0.6, "time_paid": 0, "time_seo": 52, "time_delta": -52, "visitors_paid": 0, "visitors_seo": 6, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/fcpr-entrepreneurs-selection-secondaire-2", "br_paid": 0.2, "br_seo": 0.814814814815, "br_delta": -0.6, "time_paid": 15, "time_seo": 117, "time_delta": -102, "visitors_paid": 6, "visitors_seo": 29, "events_paid": 14, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 33.3, "cr_seo": 0.0, "cr_delta": 33.3}, {"page": "/avis/fcpr-eurazeo-entrepreneurs-club-3", "br_paid": 0.777777777778, "br_seo": 0.5, "br_delta": 0.3, "time_paid": 60, "time_seo": 63, "time_delta": -3, "visitors_paid": 12, "visitors_seo": 22, "events_paid": 2, "events_seo": 4, "ev_visitors_paid": 1, "ev_visitors_seo": 3, "cr_paid": 8.3, "cr_seo": 13.6, "cr_delta": -5.3}, {"page": "/avis/fcpr-eurazeo-private-value-europe-3", "br_paid": 0.698412698413, "br_seo": 0.8125, "br_delta": -0.1, "time_paid": 108, "time_seo": 70, "time_delta": 38, "visitors_paid": 68, "visitors_seo": 122, "events_paid": 37, "events_seo": 25, "ev_visitors_paid": 4, "ev_visitors_seo": 3, "cr_paid": 5.9, "cr_seo": 2.5, "cr_delta": 3.4}, {"page": "/avis/fcpr-multi-strategies-2", "br_paid": 0.818181818182, "br_seo": 0.823529411765, "br_delta": -0.0, "time_paid": 40, "time_seo": 88, "time_delta": -48, "visitors_paid": 11, "visitors_seo": 17, "events_paid": 0, "events_seo": 2, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 5.9, "cr_delta": -5.9}, {"page": "/avis/fcpr-peqan-convictions-2023", "br_paid": 0.714285714286, "br_seo": 0.714285714286, "br_delta": 0.0, "time_paid": 33, "time_seo": 39, "time_delta": -6, "visitors_paid": 7, "visitors_seo": 17, "events_paid": 0, "events_seo": 7, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 5.9, "cr_delta": -5.9}, {"page": "/avis/fia-multi-bl4", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 51, "time_delta": -51, "visitors_paid": 0, "visitors_seo": 4, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/fip-kalliste-capital-17", "br_paid": 0.833333333333, "br_seo": 0.916666666667, "br_delta": -0.1, "time_paid": 29, "time_seo": 50, "time_delta": -21, "visitors_paid": 6, "visitors_seo": 13, "events_paid": 0, "events_seo": 6, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 7.7, "cr_delta": -7.7}, {"page": "/avis/fips-partners-group-secondary-viii-strategy", "br_paid": 0.0, "br_seo": 0.529411764706, "br_delta": -0.5, "time_paid": 62, "time_seo": 42, "time_delta": 20, "visitors_paid": 1, "visitors_seo": 20, "events_paid": 0, "events_seo": 4, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 10.0, "cr_delta": -10.0}, {"page": "/avis/fips-private-corner-buyout-eqt-strategy", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 120, "time_delta": -120, "visitors_paid": 0, "visitors_seo": 3, "events_paid": 0, "events_seo": 1, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 33.3, "cr_delta": -33.3}, {"page": "/avis/fips-x-fund", "br_paid": 0.2, "br_seo": 0.612903225806, "br_delta": -0.4, "time_paid": 61, "time_seo": 46, "time_delta": 15, "visitors_paid": 5, "visitors_seo": 59, "events_paid": 0, "events_seo": 47, "ev_visitors_paid": 0, "ev_visitors_seo": 8, "cr_paid": 0.0, "cr_seo": 13.6, "cr_delta": -13.6}, {"page": "/avis/fpci-adelie-remploi-1", "br_paid": 0, "br_seo": 0.5, "br_delta": -0.5, "time_paid": 0, "time_seo": 38, "time_delta": -38, "visitors_paid": 0, "visitors_seo": 7, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/fpci-altaroc-odyssey-2024", "br_paid": 1.0, "br_seo": 0.833333333333, "br_delta": 0.2, "time_paid": 32, "time_seo": 22, "time_delta": 10, "visitors_paid": 2, "visitors_seo": 7, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/fpci-altaroc-odyssey-2025", "br_paid": 0.609756097561, "br_seo": 0.661016949153, "br_delta": -0.1, "time_paid": 57, "time_seo": 77, "time_delta": -20, "visitors_paid": 40, "visitors_seo": 60, "events_paid": 23, "events_seo": 34, "ev_visitors_paid": 7, "ev_visitors_seo": 8, "cr_paid": 17.5, "cr_seo": 13.3, "cr_delta": 4.2}, {"page": "/avis/fpci-entrepreneurs-croissance-5", "br_paid": 1.0, "br_seo": 0.4, "br_delta": 0.6, "time_paid": 16, "time_seo": 39, "time_delta": -23, "visitors_paid": 1, "visitors_seo": 6, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/fpci-european-infragreen-strategy", "br_paid": 1.0, "br_seo": 0.625, "br_delta": 0.4, "time_paid": 34, "time_seo": 15, "time_delta": 19, "visitors_paid": 2, "visitors_seo": 8, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/fpci-private-stars-selection-4", "br_paid": 0.6, "br_seo": 0.636363636364, "br_delta": -0.0, "time_paid": 23, "time_seo": 27, "time_delta": -4, "visitors_paid": 5, "visitors_seo": 13, "events_paid": 0, "events_seo": 10, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 15.4, "cr_delta": -15.4}, {"page": "/avis/fpci-quaero-infrastructure-private-investors", "br_paid": 0.5, "br_seo": 1.0, "br_delta": -0.5, "time_paid": 12, "time_seo": 3, "time_delta": 9, "visitors_paid": 4, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/fpci-wenova-transition", "br_paid": 0.666666666667, "br_seo": 0.516129032258, "br_delta": 0.2, "time_paid": 96, "time_seo": 121, "time_delta": -25, "visitors_paid": 18, "visitors_seo": 32, "events_paid": 6, "events_seo": 11, "ev_visitors_paid": 2, "ev_visitors_seo": 6, "cr_paid": 11.1, "cr_seo": 18.8, "cr_delta": -7.7}, {"page": "/avis/fps-global-private-debt-strategies", "br_paid": 0.5, "br_seo": 0.833333333333, "br_delta": -0.3, "time_paid": 0, "time_seo": 23, "time_delta": -23, "visitors_paid": 2, "visitors_seo": 7, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/fps-keys-selection", "br_paid": 0.5, "br_seo": 0.692307692308, "br_delta": -0.2, "time_paid": 132, "time_seo": 85, "time_delta": 47, "visitors_paid": 4, "visitors_seo": 12, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/fps-multifonds-archinvest-dette-privee-1", "br_paid": 0, "br_seo": 0.5, "br_delta": -0.5, "time_paid": 0, "time_seo": 61, "time_delta": -61, "visitors_paid": 0, "visitors_seo": 9, "events_paid": 0, "events_seo": 6, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 11.1, "cr_delta": -11.1}, {"page": "/avis/fps-novaxia-one", "br_paid": 0.75, "br_seo": 0.95, "br_delta": -0.2, "time_paid": 116, "time_seo": 32, "time_delta": 84, "visitors_paid": 12, "visitors_seo": 21, "events_paid": 8, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 8.3, "cr_seo": 0.0, "cr_delta": 8.3}, {"page": "/avis/fps-opale-strategies-credits-tactiques", "br_paid": 0.714285714286, "br_seo": 0.368421052632, "br_delta": 0.3, "time_paid": 12, "time_seo": 127, "time_delta": -115, "visitors_paid": 7, "visitors_seo": 19, "events_paid": 98, "events_seo": 1, "ev_visitors_paid": 2, "ev_visitors_seo": 1, "cr_paid": 28.6, "cr_seo": 5.3, "cr_delta": 23.3}, {"page": "/avis/fps-pams-pe-carlyle-access-fund-2024", "br_paid": 1.0, "br_seo": 0.714285714286, "br_delta": 0.3, "time_paid": 5, "time_seo": 35, "time_delta": -30, "visitors_paid": 1, "visitors_seo": 6, "events_paid": 0, "events_seo": 13, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 16.7, "cr_delta": -16.7}, {"page": "/avis/fps-swen-exclusive-infrastructures-2", "br_paid": 1.0, "br_seo": 0.727272727273, "br_delta": 0.3, "time_paid": 0, "time_seo": 30, "time_delta": -30, "visitors_paid": 1, "visitors_seo": 11, "events_paid": 0, "events_seo": 6, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 18.2, "cr_delta": -18.2}, {"page": "/avis/fps-tikehau-private-assets", "br_paid": 0.727272727273, "br_seo": 0.833333333333, "br_delta": -0.1, "time_paid": 18, "time_seo": 28, "time_delta": -10, "visitors_paid": 35, "visitors_seo": 30, "events_paid": 7, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 5.7, "cr_seo": 0.0, "cr_delta": 5.7}, {"page": "/avis/matis", "br_paid": 0.666666666667, "br_seo": 0.5, "br_delta": 0.2, "time_paid": 143, "time_seo": 368, "time_delta": -225, "visitors_paid": 23, "visitors_seo": 8, "events_paid": 15, "events_seo": 21, "ev_visitors_paid": 4, "ev_visitors_seo": 1, "cr_paid": 17.4, "cr_seo": 12.5, "cr_delta": 4.9}, {"page": "/avis/scpi-altixia-commerces", "br_paid": 0.777777777778, "br_seo": 1.0, "br_delta": -0.2, "time_paid": 116, "time_seo": 0, "time_delta": 116, "visitors_paid": 11, "visitors_seo": 1, "events_paid": 10, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 9.1, "cr_seo": 0.0, "cr_delta": 9.1}, {"page": "/avis/scpi-coeur-de-regions", "br_paid": 0.6, "br_seo": 0.5, "br_delta": 0.1, "time_paid": 69, "time_seo": 54, "time_delta": 15, "visitors_paid": 11, "visitors_seo": 2, "events_paid": 4, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 18.2, "cr_seo": 0.0, "cr_delta": 18.2}, {"page": "/avis/scpi-coeur-europe", "br_paid": 0.6, "br_seo": 0.888888888889, "br_delta": -0.3, "time_paid": 192, "time_seo": 133, "time_delta": 59, "visitors_paid": 12, "visitors_seo": 10, "events_paid": 5, "events_seo": 5, "ev_visitors_paid": 2, "ev_visitors_seo": 1, "cr_paid": 16.7, "cr_seo": 10.0, "cr_delta": 6.7}, {"page": "/avis/scpi-comete", "br_paid": 0.825396825397, "br_seo": 0.625, "br_delta": 0.2, "time_paid": 102, "time_seo": 44, "time_delta": 58, "visitors_paid": 71, "visitors_seo": 20, "events_paid": 14, "events_seo": 15, "ev_visitors_paid": 5, "ev_visitors_seo": 3, "cr_paid": 7.0, "cr_seo": 15.0, "cr_delta": -8.0}, {"page": "/avis/scpi-corum-eurion", "br_paid": 1.0, "br_seo": 0.666666666667, "br_delta": 0.3, "time_paid": 29, "time_seo": 195, "time_delta": -166, "visitors_paid": 3, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-corum-origin", "br_paid": 0.0, "br_seo": 0.72, "br_delta": -0.7, "time_paid": 4, "time_seo": 95, "time_delta": -91, "visitors_paid": 2, "visitors_seo": 25, "events_paid": 0, "events_seo": 13, "ev_visitors_paid": 0, "ev_visitors_seo": 5, "cr_paid": 0.0, "cr_seo": 20.0, "cr_delta": -20.0}, {"page": "/avis/scpi-corum-usa", "br_paid": 0.0, "br_seo": 0.833333333333, "br_delta": -0.8, "time_paid": 0, "time_seo": 66, "time_delta": -66, "visitors_paid": 0, "visitors_seo": 7, "events_paid": 0, "events_seo": 15, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 14.3, "cr_delta": -14.3}, {"page": "/avis/scpi-corum-xl", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 52, "time_delta": -52, "visitors_paid": 0, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-cristal-life", "br_paid": 0.923076923077, "br_seo": 0.772727272727, "br_delta": 0.2, "time_paid": 101, "time_seo": 44, "time_delta": 57, "visitors_paid": 29, "visitors_seo": 21, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-cristal-rente", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 35, "time_delta": -35, "visitors_paid": 0, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-darwin-re01", "br_paid": 0.454545454545, "br_seo": 0.8, "br_delta": -0.3, "time_paid": 77, "time_seo": 72, "time_delta": 5, "visitors_paid": 11, "visitors_seo": 6, "events_paid": 6, "events_seo": 11, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 9.1, "cr_seo": 16.7, "cr_delta": -7.6}, {"page": "/avis/scpi-edmond-de-rothschild-europa", "br_paid": 0.716981132075, "br_seo": 1.0, "br_delta": -0.3, "time_paid": 75, "time_seo": 29, "time_delta": 46, "visitors_paid": 54, "visitors_seo": 6, "events_paid": 16, "events_seo": 0, "ev_visitors_paid": 6, "ev_visitors_seo": 0, "cr_paid": 11.1, "cr_seo": 0.0, "cr_delta": 11.1}, {"page": "/avis/scpi-elevation-tertiom", "br_paid": 0.916666666667, "br_seo": 0.8, "br_delta": 0.1, "time_paid": 68, "time_seo": 16, "time_delta": 52, "visitors_paid": 14, "visitors_seo": 5, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-epargne-pierre", "br_paid": 0.851063829787, "br_seo": 0.785714285714, "br_delta": 0.1, "time_paid": 57, "time_seo": 55, "time_delta": 2, "visitors_paid": 50, "visitors_seo": 21, "events_paid": 1, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 2.0, "cr_seo": 0.0, "cr_delta": 2.0}, {"page": "/avis/scpi-epargne-pierre-europe", "br_paid": 0.714285714286, "br_seo": 0.777777777778, "br_delta": -0.1, "time_paid": 122, "time_seo": 17, "time_delta": 105, "visitors_paid": 31, "visitors_seo": 10, "events_paid": 7, "events_seo": 2, "ev_visitors_paid": 3, "ev_visitors_seo": 1, "cr_paid": 9.7, "cr_seo": 10.0, "cr_delta": -0.3}, {"page": "/avis/scpi-epsilon-360", "br_paid": 0.736842105263, "br_seo": 0.8, "br_delta": -0.1, "time_paid": 52, "time_seo": 45, "time_delta": 7, "visitors_paid": 23, "visitors_seo": 10, "events_paid": 12, "events_seo": 6, "ev_visitors_paid": 4, "ev_visitors_seo": 2, "cr_paid": 17.4, "cr_seo": 20.0, "cr_delta": -2.6}, {"page": "/avis/scpi-esg-pierre-capitale", "br_paid": 0.75, "br_seo": 0, "br_delta": 0.8, "time_paid": 288, "time_seo": 0, "time_delta": 288, "visitors_paid": 5, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/avis/scpi-immorente", "br_paid": 0.78, "br_seo": 0.71875, "br_delta": 0.1, "time_paid": 103, "time_seo": 56, "time_delta": 47, "visitors_paid": 55, "visitors_seo": 31, "events_paid": 12, "events_seo": 5, "ev_visitors_paid": 4, "ev_visitors_seo": 2, "cr_paid": 7.3, "cr_seo": 6.5, "cr_delta": 0.8}, {"page": "/avis/scpi-iroko-zen", "br_paid": 0.666666666667, "br_seo": 0.708333333333, "br_delta": -0.0, "time_paid": 41, "time_seo": 94, "time_delta": -53, "visitors_paid": 12, "visitors_seo": 56, "events_paid": 13, "events_seo": 80, "ev_visitors_paid": 1, "ev_visitors_seo": 6, "cr_paid": 8.3, "cr_seo": 10.7, "cr_delta": -2.4}, {"page": "/avis/scpi-kyaneos-pierre", "br_paid": 0.727272727273, "br_seo": 0.0, "br_delta": 0.7, "time_paid": 31, "time_seo": 4, "time_delta": 27, "visitors_paid": 11, "visitors_seo": 1, "events_paid": 1, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 9.1, "cr_seo": 0.0, "cr_delta": 9.1}, {"page": "/avis/scpi-lf-opportunite-immo", "br_paid": 1.0, "br_seo": 0.6, "br_delta": 0.4, "time_paid": 58, "time_seo": 23, "time_delta": 35, "visitors_paid": 5, "visitors_seo": 6, "events_paid": 0, "events_seo": 13, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 16.7, "cr_delta": -16.7}, {"page": "/avis/scpi-log-in", "br_paid": 0.777777777778, "br_seo": 0.6, "br_delta": 0.2, "time_paid": 112, "time_seo": 98, "time_delta": 14, "visitors_paid": 11, "visitors_seo": 5, "events_paid": 0, "events_seo": 2, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 20.0, "cr_delta": -20.0}, {"page": "/avis/scpi-mistral-selection", "br_paid": 0.696428571429, "br_seo": 0.666666666667, "br_delta": 0.0, "time_paid": 133, "time_seo": 68, "time_delta": 65, "visitors_paid": 54, "visitors_seo": 8, "events_paid": 3, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 3.7, "cr_seo": 0.0, "cr_delta": 3.7}, {"page": "/avis/scpi-ncap-continent", "br_paid": 0.857142857143, "br_seo": 1.0, "br_delta": -0.1, "time_paid": 99, "time_seo": 0, "time_delta": 99, "visitors_paid": 8, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-novapierre-1", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 62, "time_delta": -62, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-novaxia-neo", "br_paid": 1.0, "br_seo": 0.833333333333, "br_delta": 0.2, "time_paid": 115, "time_seo": 160, "time_delta": -45, "visitors_paid": 15, "visitors_seo": 7, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-paref-hexa", "br_paid": 0.636363636364, "br_seo": 1.0, "br_delta": -0.4, "time_paid": 102, "time_seo": 45, "time_delta": 57, "visitors_paid": 12, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-pfo", "br_paid": 0.9, "br_seo": 0.888888888889, "br_delta": 0.0, "time_paid": 35, "time_seo": 49, "time_delta": -14, "visitors_paid": 11, "visitors_seo": 19, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-pierval-sante", "br_paid": 0.782608695652, "br_seo": 0.936170212766, "br_delta": -0.2, "time_paid": 63, "time_seo": 61, "time_delta": 2, "visitors_paid": 49, "visitors_seo": 46, "events_paid": 12, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 2.0, "cr_seo": 0.0, "cr_delta": 2.0}, {"page": "/avis/scpi-primopierre", "br_paid": 0.844444444444, "br_seo": 0.897959183673, "br_delta": -0.1, "time_paid": 82, "time_seo": 62, "time_delta": 20, "visitors_paid": 44, "visitors_seo": 188, "events_paid": 3, "events_seo": 1, "ev_visitors_paid": 2, "ev_visitors_seo": 1, "cr_paid": 4.5, "cr_seo": 0.5, "cr_delta": 4.0}, {"page": "/avis/scpi-remake-live", "br_paid": 0.655172413793, "br_seo": 0.416666666667, "br_delta": 0.2, "time_paid": 26, "time_seo": 61, "time_delta": -35, "visitors_paid": 34, "visitors_seo": 15, "events_paid": 6, "events_seo": 30, "ev_visitors_paid": 1, "ev_visitors_seo": 3, "cr_paid": 2.9, "cr_seo": 20.0, "cr_delta": -17.1}, {"page": "/avis/scpi-rivoli-avenir-patrimoine", "br_paid": 0.852631578947, "br_seo": 0.76, "br_delta": 0.1, "time_paid": 88, "time_seo": 94, "time_delta": -6, "visitors_paid": 90, "visitors_seo": 25, "events_paid": 38, "events_seo": 2, "ev_visitors_paid": 4, "ev_visitors_seo": 1, "cr_paid": 4.4, "cr_seo": 4.0, "cr_delta": 0.4}, {"page": "/avis/scpi-sofidy-europe-invest", "br_paid": 0.6875, "br_seo": 0.777777777778, "br_delta": -0.1, "time_paid": 93, "time_seo": 35, "time_delta": 58, "visitors_paid": 18, "visitors_seo": 10, "events_paid": 2, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 5.6, "cr_seo": 0.0, "cr_delta": 5.6}, {"page": "/avis/scpi-sofidynamic", "br_paid": 0.787234042553, "br_seo": 0.285714285714, "br_delta": 0.5, "time_paid": 77, "time_seo": 87, "time_delta": -10, "visitors_paid": 47, "visitors_seo": 8, "events_paid": 11, "events_seo": 32, "ev_visitors_paid": 4, "ev_visitors_seo": 3, "cr_paid": 8.5, "cr_seo": 37.5, "cr_delta": -29.0}, {"page": "/avis/scpi-transitions-europe", "br_paid": 0.80303030303, "br_seo": 0.815789473684, "br_delta": -0.0, "time_paid": 92, "time_seo": 67, "time_delta": 25, "visitors_paid": 73, "visitors_seo": 38, "events_paid": 41, "events_seo": 15, "ev_visitors_paid": 4, "ev_visitors_seo": 3, "cr_paid": 5.5, "cr_seo": 7.9, "cr_delta": -2.4}, {"page": "/avis/scpi-upeka", "br_paid": 0.833333333333, "br_seo": 1.0, "br_delta": -0.2, "time_paid": 42, "time_seo": 77, "time_delta": -35, "visitors_paid": 6, "visitors_seo": 4, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/scpi-urban-coeur-commerce", "br_paid": 1.0, "br_seo": 0, "br_delta": 1.0, "time_paid": 258, "time_seo": 0, "time_delta": 258, "visitors_paid": 2, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/avis/scpi-vendome-regions", "br_paid": 0.777777777778, "br_seo": 0.734693877551, "br_delta": 0.0, "time_paid": 21, "time_seo": 40, "time_delta": -19, "visitors_paid": 9, "visitors_seo": 48, "events_paid": 0, "events_seo": 4, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 2.1, "cr_delta": -2.1}, {"page": "/avis/slp-eurazeo-secondary-feeder-fund-v", "br_paid": 1.0, "br_seo": 0.571428571429, "br_delta": 0.4, "time_paid": 0, "time_seo": 39, "time_delta": -39, "visitors_paid": 1, "visitors_seo": 13, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/slp-morgan-stanley-dette-privee-europe", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 90, "time_delta": -90, "visitors_paid": 0, "visitors_seo": 9, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/avis/tikehau-european-private-credit", "br_paid": 0.675, "br_seo": 0.714285714286, "br_delta": -0.0, "time_paid": 74, "time_seo": 66, "time_delta": 8, "visitors_paid": 42, "visitors_seo": 51, "events_paid": 11, "events_seo": 44, "ev_visitors_paid": 4, "ev_visitors_seo": 3, "cr_paid": 9.5, "cr_seo": 5.9, "cr_delta": 3.6}, {"page": "/blog/levee-serie-a", "br_paid": 0, "br_seo": 0.488372093023, "br_delta": -0.5, "time_paid": 0, "time_seo": 60, "time_delta": -60, "visitors_paid": 0, "visitors_seo": 49, "events_paid": 0, "events_seo": 57, "ev_visitors_paid": 0, "ev_visitors_seo": 7, "cr_paid": 0, "cr_seo": 14.3, "cr_delta": -14.3}, {"page": "/blog/levee-serie-a&source=gmail&ust=1720794320090000&usg=AOvVaw2kM3PXipC5V_AhBwWEqvw5", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/blog/ma-retraite-complementaire-en-tant-que-salarie-dans-le-secteur-prive", "br_paid": 0.837837837838, "br_seo": 0, "br_delta": 0.8, "time_paid": 25, "time_seo": 0, "time_delta": 25, "visitors_paid": 36, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/blog/ma-retraite-de-base-en-tant-que-salarie-dans-le-secteur-prive", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 65, "time_seo": 0, "time_delta": 65, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/bours", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 7, "time_delta": -7, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/bourse", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 82, "time_seo": 86, "time_delta": -4, "visitors_paid": 5, "visitors_seo": 10, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/bourse/actions-bilan-2024-perspectives-2025", "br_paid": 1.0, "br_seo": 0, "br_delta": 1.0, "time_paid": 2, "time_seo": 0, "time_delta": 2, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/bourse/bilan-2023-perspectives-2024---le-marche-des-obligations", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 13, "time_seo": 0, "time_delta": 13, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/bourse/bilan-2023-perspectives-2024-actions", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 161, "time_seo": 0, "time_delta": 161, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/bourse/cac-40", "br_paid": 0.802469135802, "br_seo": 0.830882352941, "br_delta": -0.0, "time_paid": 63, "time_seo": 76, "time_delta": -13, "visitors_paid": 80, "visitors_seo": 140, "events_paid": 0, "events_seo": 3, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 0.7, "cr_delta": -0.7}, {"page": "/bourse/comment-investir", "br_paid": 0.80198019802, "br_seo": 0.818181818182, "br_delta": -0.0, "time_paid": 121, "time_seo": 201, "time_delta": -80, "visitors_paid": 95, "visitors_seo": 16, "events_paid": 13, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 2.1, "cr_seo": 0.0, "cr_delta": 2.1}, {"page": "/bourse/etf-monde", "br_paid": 0.758007117438, "br_seo": 0.72641509434, "br_delta": 0.0, "time_paid": 108, "time_seo": 113, "time_delta": -5, "visitors_paid": 301, "visitors_seo": 127, "events_paid": 84, "events_seo": 7, "ev_visitors_paid": 13, "ev_visitors_seo": 2, "cr_paid": 4.3, "cr_seo": 1.6, "cr_delta": 2.7}, {"page": "/bourse/etf-ou-opcvm", "br_paid": 0.827272727273, "br_seo": 0.838235294118, "br_delta": -0.0, "time_paid": 78, "time_seo": 80, "time_delta": -2, "visitors_paid": 230, "visitors_seo": 213, "events_paid": 4, "events_seo": 8, "ev_visitors_paid": 2, "ev_visitors_seo": 4, "cr_paid": 0.9, "cr_seo": 1.9, "cr_delta": -1.0}, {"page": "/bourse/etf-pea-assurance-vie", "br_paid": 0.842857142857, "br_seo": 0.829787234043, "br_delta": 0.0, "time_paid": 138, "time_seo": 171, "time_delta": -33, "visitors_paid": 72, "visitors_seo": 142, "events_paid": 8, "events_seo": 19, "ev_visitors_paid": 2, "ev_visitors_seo": 4, "cr_paid": 2.8, "cr_seo": 2.8, "cr_delta": 0.0}, {"page": "/bourse/etf-sp-500", "br_paid": 0.782956058589, "br_seo": 0.786427145709, "br_delta": -0.0, "time_paid": 94, "time_seo": 81, "time_delta": 13, "visitors_paid": 716, "visitors_seo": 504, "events_paid": 89, "events_seo": 28, "ev_visitors_paid": 19, "ev_visitors_seo": 8, "cr_paid": 2.7, "cr_seo": 1.6, "cr_delta": 1.1}, {"page": "/bourse/meilleur-etf", "br_paid": 0.669790915645, "br_seo": 0.698267564966, "br_delta": -0.0, "time_paid": 79, "time_seo": 74, "time_delta": 5, "visitors_paid": 1487, "visitors_seo": 2150, "events_paid": 284, "events_seo": 507, "ev_visitors_paid": 56, "ev_visitors_seo": 91, "cr_paid": 3.8, "cr_seo": 4.2, "cr_delta": -0.4}, {"page": "/bourse/msci-world", "br_paid": 0.82131661442, "br_seo": 0.854895104895, "br_delta": -0.0, "time_paid": 97, "time_seo": 86, "time_delta": 11, "visitors_paid": 348, "visitors_seo": 582, "events_paid": 44, "events_seo": 46, "ev_visitors_paid": 7, "ev_visitors_seo": 10, "cr_paid": 2.0, "cr_seo": 1.7, "cr_delta": 0.3}, {"page": "/bourse/obligations-bilan-2024-perspectives-2025", "br_paid": 0.8, "br_seo": 0.736842105263, "br_delta": 0.1, "time_paid": 41, "time_seo": 48, "time_delta": -7, "visitors_paid": 14, "visitors_seo": 21, "events_paid": 11, "events_seo": 1, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 7.1, "cr_seo": 4.8, "cr_delta": 2.3}, {"page": "/bourse/ou-va-mon-argent-quand-jinvestis-en-bourse", "br_paid": 0.0, "br_seo": 0.739130434783, "br_delta": -0.7, "time_paid": 26, "time_seo": 99, "time_delta": -73, "visitors_paid": 1, "visitors_seo": 24, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/bourse/quand-investir", "br_paid": 0.888888888889, "br_seo": 0.804597701149, "br_delta": 0.1, "time_paid": 131, "time_seo": 83, "time_delta": 48, "visitors_paid": 23, "visitors_seo": 96, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/bourse/sp-500", "br_paid": 0.8, "br_seo": 0.815985130112, "br_delta": -0.0, "time_paid": 67, "time_seo": 75, "time_delta": -8, "visitors_paid": 173, "visitors_seo": 531, "events_paid": 55, "events_seo": 32, "ev_visitors_paid": 3, "ev_visitors_seo": 8, "cr_paid": 1.7, "cr_seo": 1.5, "cr_delta": 0.2}, {"page": "/campagne-ramify-black", "br_paid": 0, "br_seo": 0.5, "br_delta": -0.5, "time_paid": 0, "time_seo": 20, "time_delta": -20, "visitors_paid": 0, "visitors_seo": 4, "events_paid": 0, "events_seo": 1, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 25.0, "cr_delta": -25.0}, {"page": "/comparatif/vs-banque-privee", "br_paid": 0.0, "br_seo": 0.444444444444, "br_delta": -0.4, "time_paid": 497, "time_seo": 83, "time_delta": 414, "visitors_paid": 2, "visitors_seo": 15, "events_paid": 0, "events_seo": 37, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 13.3, "cr_delta": -13.3}, {"page": "/comparatif/vs-robo-advisor", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 31, "time_delta": -31, "visitors_paid": 0, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/crypto", "br_paid": 0.0, "br_seo": 0.363636363636, "br_delta": -0.4, "time_paid": 0, "time_seo": 179, "time_delta": -179, "visitors_paid": 1, "visitors_seo": 29, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/crypto/bitcoin", "br_paid": 0.833333333333, "br_seo": 0.8, "br_delta": 0.0, "time_paid": 97, "time_seo": 128, "time_delta": -31, "visitors_paid": 31, "visitors_seo": 8, "events_paid": 2, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 3.2, "cr_seo": 0.0, "cr_delta": 3.2}, {"page": "/crypto/comment-investir", "br_paid": 0.0, "br_seo": 0.785714285714, "br_delta": -0.8, "time_paid": 105, "time_seo": 165, "time_delta": -60, "visitors_paid": 1, "visitors_seo": 44, "events_paid": 0, "events_seo": 6, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 2.3, "cr_delta": -2.3}, {"page": "/crypto/defi", "br_paid": 1.0, "br_seo": 0.75, "br_delta": 0.2, "time_paid": 114, "time_seo": 248, "time_delta": -134, "visitors_paid": 6, "visitors_seo": 7, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/crypto/etf-bitcoin", "br_paid": 0.0, "br_seo": 0.777089783282, "br_delta": -0.8, "time_paid": 102, "time_seo": 106, "time_delta": -4, "visitors_paid": 3, "visitors_seo": 317, "events_paid": 0, "events_seo": 16, "ev_visitors_paid": 0, "ev_visitors_seo": 5, "cr_paid": 0.0, "cr_seo": 1.6, "cr_delta": -1.6}, {"page": "/crypto/etf-ethereum", "br_paid": 0.740740740741, "br_seo": 0.835820895522, "br_delta": -0.1, "time_paid": 92, "time_seo": 91, "time_delta": 1, "visitors_paid": 26, "visitors_seo": 72, "events_paid": 4, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 7.7, "cr_seo": 0.0, "cr_delta": 7.7}, {"page": "/crypto/ethereum", "br_paid": 0.918918918919, "br_seo": 0.666666666667, "br_delta": 0.3, "time_paid": 57, "time_seo": 91, "time_delta": -34, "visitors_paid": 33, "visitors_seo": 20, "events_paid": 2, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 3.0, "cr_seo": 0.0, "cr_delta": 3.0}, {"page": "/crypto/fiscalite", "br_paid": 0.861445783133, "br_seo": 0.837320574163, "br_delta": 0.0, "time_paid": 107, "time_seo": 96, "time_delta": 11, "visitors_paid": 157, "visitors_seo": 205, "events_paid": 30, "events_seo": 21, "ev_visitors_paid": 4, "ev_visitors_seo": 4, "cr_paid": 2.5, "cr_seo": 2.0, "cr_delta": 0.5}, {"page": "/crypto/meilleure-plateforme", "br_paid": 0.0, "br_seo": 0.861259338314, "br_delta": -0.9, "time_paid": 0, "time_seo": 89, "time_delta": -89, "visitors_paid": 1, "visitors_seo": 1803, "events_paid": 0, "events_seo": 333, "ev_visitors_paid": 0, "ev_visitors_seo": 44, "cr_paid": 0.0, "cr_seo": 2.4, "cr_delta": -2.4}, {"page": "/crypto/solana", "br_paid": 0.92, "br_seo": 1.0, "br_delta": -0.1, "time_paid": 128, "time_seo": 16, "time_delta": 112, "visitors_paid": 25, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/crypto/stablecoins", "br_paid": 0.0, "br_seo": 0.775, "br_delta": -0.8, "time_paid": 0, "time_seo": 69, "time_delta": -69, "visitors_paid": 0, "visitors_seo": 41, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/cto", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0, "cr_delta": 0}, {"page": "/defiscalisation", "br_paid": 0.851851851852, "br_seo": 0.375, "br_delta": 0.5, "time_paid": 68, "time_seo": 94, "time_delta": -26, "visitors_paid": 42, "visitors_seo": 26, "events_paid": 0, "events_seo": 2, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 3.8, "cr_delta": -3.8}, {"page": "/defiscalisation/baisser-revenu-fiscal-reference", "br_paid": 0.0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 83, "time_seo": 96, "time_delta": -13, "visitors_paid": 2, "visitors_seo": 5, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/defiscalisation/loi-girardin", "br_paid": 0.904761904762, "br_seo": 0.941176470588, "br_delta": -0.0, "time_paid": 117, "time_seo": 89, "time_delta": 28, "visitors_paid": 707, "visitors_seo": 37, "events_paid": 66, "events_seo": 0, "ev_visitors_paid": 11, "ev_visitors_seo": 0, "cr_paid": 1.6, "cr_seo": 0.0, "cr_delta": 1.6}, {"page": "/defiscalisation/niche-fiscale", "br_paid": 0.882352941176, "br_seo": 0.863636363636, "br_delta": 0.0, "time_paid": 67, "time_seo": 73, "time_delta": -6, "visitors_paid": 18, "visitors_seo": 44, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/defiscalisation/pacte-dutreil", "br_paid": 0, "br_seo": 0.909090909091, "br_delta": -0.9, "time_paid": 0, "time_seo": 117, "time_delta": -117, "visitors_paid": 0, "visitors_seo": 14, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/defiscalisation/plf-loi-finances", "br_paid": 0.5, "br_seo": 0.95652173913, "br_delta": -0.5, "time_paid": 96, "time_seo": 28, "time_delta": 68, "visitors_paid": 2, "visitors_seo": 24, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/defiscalisation/reduction-ifi", "br_paid": 0.874074074074, "br_seo": 0.897058823529, "br_delta": -0.0, "time_paid": 113, "time_seo": 99, "time_delta": 14, "visitors_paid": 386, "visitors_seo": 68, "events_paid": 23, "events_seo": 6, "ev_visitors_paid": 4, "ev_visitors_seo": 2, "cr_paid": 1.0, "cr_seo": 2.9, "cr_delta": -1.9}, {"page": "/defiscalisation/reduire-supprimer-impots-revenus-locatifs", "br_paid": 0.885714285714, "br_seo": 0, "br_delta": 0.9, "time_paid": 52, "time_seo": 0, "time_delta": 52, "visitors_paid": 308, "visitors_seo": 0, "events_paid": 3, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 0.3, "cr_seo": 0, "cr_delta": 0.3}, {"page": "/epargne", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/alternatives-ldds", "br_paid": 0.0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 238, "time_seo": 120, "time_delta": 118, "visitors_paid": 12, "visitors_seo": 26, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/alternatives-livret-a", "br_paid": 0.901098901099, "br_seo": 0.583333333333, "br_delta": 0.3, "time_paid": 71, "time_seo": 84, "time_delta": -13, "visitors_paid": 107, "visitors_seo": 55, "events_paid": 1, "events_seo": 2, "ev_visitors_paid": 1, "ev_visitors_seo": 2, "cr_paid": 0.9, "cr_seo": 3.6, "cr_delta": -2.7}, {"page": "/epargne/assurance-vie-ou-livret-a", "br_paid": 0.902702702703, "br_seo": 0.934210526316, "br_delta": -0.0, "time_paid": 101, "time_seo": 97, "time_delta": 4, "visitors_paid": 192, "visitors_seo": 91, "events_paid": 17, "events_seo": 0, "ev_visitors_paid": 3, "ev_visitors_seo": 0, "cr_paid": 1.6, "cr_seo": 0.0, "cr_delta": 1.6}, {"page": "/epargne/assurance-vie-ou-per", "br_paid": 0.873517786561, "br_seo": 0.0, "br_delta": 0.9, "time_paid": 119, "time_seo": 8, "time_delta": 111, "visitors_paid": 255, "visitors_seo": 1, "events_paid": 5, "events_seo": 0, "ev_visitors_paid": 3, "ev_visitors_seo": 0, "cr_paid": 1.2, "cr_seo": 0.0, "cr_delta": 1.2}, {"page": "/epargne/combien-avoir-de-cote-40-ans", "br_paid": 0.913580246914, "br_seo": 0.878612716763, "br_delta": 0.0, "time_paid": 81, "time_seo": 108, "time_delta": -27, "visitors_paid": 86, "visitors_seo": 354, "events_paid": 1, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 1.2, "cr_seo": 0.0, "cr_delta": 1.2}, {"page": "/epargne/combien-avoir-de-cote-50-ans", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 77, "time_delta": -77, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/combien-avoir-de-cote-a-30-ans", "br_paid": 0.866666666667, "br_seo": 0.90625, "br_delta": -0.0, "time_paid": 140, "time_seo": 76, "time_delta": 64, "visitors_paid": 18, "visitors_seo": 324, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/combien-avoir-de-cote-a-50-ans", "br_paid": 0.829457364341, "br_seo": 0.918222222222, "br_delta": -0.1, "time_paid": 85, "time_seo": 107, "time_delta": -22, "visitors_paid": 134, "visitors_seo": 1115, "events_paid": 4, "events_seo": 9, "ev_visitors_paid": 2, "ev_visitors_seo": 3, "cr_paid": 1.5, "cr_seo": 0.3, "cr_delta": 1.2}, {"page": "/epargne/combien-avoir-de-cote-a-50-ansepargne", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0, "cr_delta": 0}, {"page": "/epargne/combien-avoir-de-cote-a-60-ans", "br_paid": 0.883720930233, "br_seo": 0.913461538462, "br_delta": -0.0, "time_paid": 95, "time_seo": 124, "time_delta": -29, "visitors_paid": 94, "visitors_seo": 118, "events_paid": 2, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 2.1, "cr_seo": 0.0, "cr_delta": 2.1}, {"page": "/epargne/combien-rapportent-1-million-euros-places", "br_paid": 0.926573426573, "br_seo": 0.878661087866, "br_delta": 0.0, "time_paid": 71, "time_seo": 103, "time_delta": -32, "visitors_paid": 285, "visitors_seo": 467, "events_paid": 3, "events_seo": 13, "ev_visitors_paid": 1, "ev_visitors_seo": 3, "cr_paid": 0.4, "cr_seo": 0.6, "cr_delta": -0.2}, {"page": "/epargne/combien-rapportent-500-000-euros-places", "br_paid": 0.894736842105, "br_seo": 0.867924528302, "br_delta": 0.0, "time_paid": 52, "time_seo": 93, "time_delta": -41, "visitors_paid": 146, "visitors_seo": 207, "events_paid": 17, "events_seo": 48, "ev_visitors_paid": 1, "ev_visitors_seo": 5, "cr_paid": 0.7, "cr_seo": 2.4, "cr_delta": -1.7}, {"page": "/epargne/combien-rapportent-50000-euros-places", "br_paid": 0.958333333333, "br_seo": 0.833333333333, "br_delta": 0.1, "time_paid": 85, "time_seo": 88, "time_delta": -3, "visitors_paid": 34, "visitors_seo": 127, "events_paid": 0, "events_seo": 19, "ev_visitors_paid": 0, "ev_visitors_seo": 3, "cr_paid": 0.0, "cr_seo": 2.4, "cr_delta": -2.4}, {"page": "/epargne/comment-investir", "br_paid": 0.892857142857, "br_seo": 0.4, "br_delta": 0.5, "time_paid": 96, "time_seo": 139, "time_delta": -43, "visitors_paid": 27, "visitors_seo": 11, "events_paid": 6, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 3.7, "cr_seo": 0.0, "cr_delta": 3.7}, {"page": "/epargne/compte-a-terme", "br_paid": 0.87619047619, "br_seo": 0.844134536505, "br_delta": 0.0, "time_paid": 99, "time_seo": 95, "time_delta": 4, "visitors_paid": 1183, "visitors_seo": 1250, "events_paid": 79, "events_seo": 206, "ev_visitors_paid": 26, "ev_visitors_seo": 46, "cr_paid": 2.2, "cr_seo": 3.7, "cr_delta": -1.5}, {"page": "/epargne/compte-titres", "br_paid": 0.819327731092, "br_seo": 0.533333333333, "br_delta": 0.3, "time_paid": 106, "time_seo": 79, "time_delta": 27, "visitors_paid": 243, "visitors_seo": 44, "events_paid": 23, "events_seo": 53, "ev_visitors_paid": 4, "ev_visitors_seo": 5, "cr_paid": 1.6, "cr_seo": 11.4, "cr_delta": -9.8}, {"page": "/epargne/compte-titres-ou-assurance-vie", "br_paid": 0.9, "br_seo": 0.764705882353, "br_delta": 0.1, "time_paid": 121, "time_seo": 81, "time_delta": 40, "visitors_paid": 41, "visitors_seo": 21, "events_paid": 12, "events_seo": 27, "ev_visitors_paid": 2, "ev_visitors_seo": 3, "cr_paid": 4.9, "cr_seo": 14.3, "cr_delta": -9.4}, {"page": "/epargne/contrat-capitalisation", "br_paid": 0.878179384203, "br_seo": 0.666666666667, "br_delta": 0.2, "time_paid": 149, "time_seo": 163, "time_delta": -14, "visitors_paid": 727, "visitors_seo": 32, "events_paid": 76, "events_seo": 8, "ev_visitors_paid": 7, "ev_visitors_seo": 2, "cr_paid": 1.0, "cr_seo": 6.2, "cr_delta": -5.2}, {"page": "/epargne/diversifier", "br_paid": 0.813333333333, "br_seo": 0.705882352941, "br_delta": 0.1, "time_paid": 96, "time_seo": 84, "time_delta": 12, "visitors_paid": 77, "visitors_seo": 75, "events_paid": 47, "events_seo": 3, "ev_visitors_paid": 6, "ev_visitors_seo": 3, "cr_paid": 7.8, "cr_seo": 4.0, "cr_delta": 3.8}, {"page": "/epargne/enveloppe-fiscale", "br_paid": 0.0, "br_seo": 0.789473684211, "br_delta": -0.8, "time_paid": 141, "time_seo": 108, "time_delta": 33, "visitors_paid": 9, "visitors_seo": 39, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/epargne-moyenne-des-francais", "br_paid": 0.834239130435, "br_seo": 0.880922950144, "br_delta": -0.0, "time_paid": 96, "time_seo": 72, "time_delta": 24, "visitors_paid": 359, "visitors_seo": 2399, "events_paid": 40, "events_seo": 171, "ev_visitors_paid": 3, "ev_visitors_seo": 22, "cr_paid": 0.8, "cr_seo": 0.9, "cr_delta": -0.1}, {"page": "/epargne/epargne-moyenne-des-francais%202023).", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 4, "time_delta": -4, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/fiscalite-cto", "br_paid": 0, "br_seo": 0.5, "br_delta": -0.5, "time_paid": 0, "time_seo": 43, "time_delta": -43, "visitors_paid": 0, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/fonds-euros", "br_paid": 0.863539445629, "br_seo": 0.548387096774, "br_delta": 0.3, "time_paid": 105, "time_seo": 96, "time_delta": 9, "visitors_paid": 485, "visitors_seo": 53, "events_paid": 67, "events_seo": 45, "ev_visitors_paid": 4, "ev_visitors_seo": 4, "cr_paid": 0.8, "cr_seo": 7.5, "cr_delta": -6.7}, {"page": "/epargne/gestion-horizon", "br_paid": 0.75, "br_seo": 0.733333333333, "br_delta": 0.0, "time_paid": 146, "time_seo": 40, "time_delta": 106, "visitors_paid": 8, "visitors_seo": 15, "events_paid": 4, "events_seo": 15, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 12.5, "cr_seo": 6.7, "cr_delta": 5.8}, {"page": "/epargne/interessement-participation", "br_paid": 0.94512195122, "br_seo": 0.939285714286, "br_delta": 0.0, "time_paid": 61, "time_seo": 38, "time_delta": 23, "visitors_paid": 463, "visitors_seo": 272, "events_paid": 3, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 0.2, "cr_seo": 0.0, "cr_delta": 0.2}, {"page": "/epargne/investir-100000-euros", "br_paid": 0.905172413793, "br_seo": 0.879411764706, "br_delta": 0.0, "time_paid": 56, "time_seo": 106, "time_delta": -50, "visitors_paid": 229, "visitors_seo": 1325, "events_paid": 1, "events_seo": 89, "ev_visitors_paid": 1, "ev_visitors_seo": 16, "cr_paid": 0.4, "cr_seo": 1.2, "cr_delta": -0.8}, {"page": "/epargne/investir-1000000%20%20EUROS", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 2, "time_delta": -2, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/ldds", "br_paid": 0.92, "br_seo": 0.923076923077, "br_delta": -0.0, "time_paid": 73, "time_seo": 46, "time_delta": 27, "visitors_paid": 299, "visitors_seo": 28, "events_paid": 21, "events_seo": 0, "ev_visitors_paid": 3, "ev_visitors_seo": 0, "cr_paid": 1.0, "cr_seo": 0.0, "cr_delta": 1.0}, {"page": "/epargne/livret-a-perte-pouvoir-achat", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 23, "time_delta": -23, "visitors_paid": 0, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/livret-a-plafond", "br_paid": 0.85145482389, "br_seo": 0.889121338912, "br_delta": -0.0, "time_paid": 89, "time_seo": 95, "time_delta": -6, "visitors_paid": 657, "visitors_seo": 1897, "events_paid": 17, "events_seo": 58, "ev_visitors_paid": 4, "ev_visitors_seo": 10, "cr_paid": 0.6, "cr_seo": 0.5, "cr_delta": 0.1}, {"page": "/epargne/livret-bancaire", "br_paid": 0.875, "br_seo": 0.75, "br_delta": 0.1, "time_paid": 73, "time_seo": 108, "time_delta": -35, "visitors_paid": 30, "visitors_seo": 30, "events_paid": 0, "events_seo": 29, "ev_visitors_paid": 0, "ev_visitors_seo": 3, "cr_paid": 0.0, "cr_seo": 10.0, "cr_delta": -10.0}, {"page": "/epargne/ma-retraite-de-base-en-tant-que-salarie-dans-le-secteur-prive", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 4, "time_seo": 0, "time_delta": 4, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/epargne/pea-ou-assurance-vie", "br_paid": 0.834158415842, "br_seo": 0.454545454545, "br_delta": 0.4, "time_paid": 125, "time_seo": 107, "time_delta": 18, "visitors_paid": 401, "visitors_seo": 20, "events_paid": 89, "events_seo": 8, "ev_visitors_paid": 9, "ev_visitors_seo": 1, "cr_paid": 2.2, "cr_seo": 5.0, "cr_delta": -2.8}, {"page": "/epargne/pea-ou-compte-titres", "br_paid": 0.872204472843, "br_seo": 0.928571428571, "br_delta": -0.1, "time_paid": 118, "time_seo": 35, "time_delta": 83, "visitors_paid": 307, "visitors_seo": 16, "events_paid": 25, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 0.7, "cr_seo": 0.0, "cr_delta": 0.7}, {"page": "/epargne/per-ou-pea", "br_paid": 0.861386138614, "br_seo": 0.796875, "br_delta": 0.1, "time_paid": 68, "time_seo": 127, "time_delta": -59, "visitors_paid": 100, "visitors_seo": 125, "events_paid": 22, "events_seo": 18, "ev_visitors_paid": 3, "ev_visitors_seo": 4, "cr_paid": 3.0, "cr_seo": 3.2, "cr_delta": -0.2}, {"page": "/epargne/per-pea-assurance-vie", "br_paid": 0.0, "br_seo": 0.333333333333, "br_delta": -0.3, "time_paid": 0, "time_seo": 54, "time_delta": -54, "visitors_paid": 0, "visitors_seo": 19, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/placement-rentable", "br_paid": 1.0, "br_seo": 0.666666666667, "br_delta": 0.3, "time_paid": 132, "time_seo": 79, "time_delta": 53, "visitors_paid": 17, "visitors_seo": 78, "events_paid": 0, "events_seo": 8, "ev_visitors_paid": 0, "ev_visitors_seo": 3, "cr_paid": 0.0, "cr_seo": 3.8, "cr_delta": -3.8}, {"page": "/epargne/placements-sans-risque", "br_paid": 0.890625, "br_seo": 0.533333333333, "br_delta": 0.4, "time_paid": 110, "time_seo": 80, "time_delta": 30, "visitors_paid": 74, "visitors_seo": 20, "events_paid": 3, "events_seo": 20, "ev_visitors_paid": 2, "ev_visitors_seo": 3, "cr_paid": 2.7, "cr_seo": 15.0, "cr_delta": -12.3}, {"page": "/epargne/plafond-atteint-pel", "br_paid": 0.863247863248, "br_seo": 0.867172675522, "br_delta": -0.0, "time_paid": 98, "time_seo": 107, "time_delta": -9, "visitors_paid": 571, "visitors_seo": 519, "events_paid": 19, "events_seo": 7, "ev_visitors_paid": 7, "ev_visitors_seo": 1, "cr_paid": 1.2, "cr_seo": 0.2, "cr_delta": 1.0}, {"page": "/epargne/plafond-cel-atteint", "br_paid": 0.858208955224, "br_seo": 0.875536480687, "br_delta": -0.0, "time_paid": 55, "time_seo": 57, "time_delta": -2, "visitors_paid": 269, "visitors_seo": 236, "events_paid": 6, "events_seo": 3, "ev_visitors_paid": 3, "ev_visitors_seo": 1, "cr_paid": 1.1, "cr_seo": 0.4, "cr_delta": 0.7}, {"page": "/epargne/pourquoi-epargner", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 9, "time_delta": -9, "visitors_paid": 0, "visitors_seo": 4, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/preparer-retraite", "br_paid": 0.75, "br_seo": 0.0, "br_delta": 0.8, "time_paid": 43, "time_seo": 49, "time_delta": -6, "visitors_paid": 4, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/preparer-retraite-40-ans", "br_paid": 0.869565217391, "br_seo": 1.0, "br_delta": -0.1, "time_paid": 126, "time_seo": 4, "time_delta": 122, "visitors_paid": 44, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/proprietaire-vs-locataire-1", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/proprietaire-vs-locataire-3-rentable-acheter", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 2, "time_seo": 5, "time_delta": -3, "visitors_paid": 1, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/proprietaire-vs-locataire-episode-2-le-face-a-face-des-frais", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0, "cr_delta": 0}, {"page": "/epargne/que-faire-quand-mon-ldds-est-plein", "br_paid": 0.863402061856, "br_seo": 0.850311850312, "br_delta": 0.0, "time_paid": 68, "time_seo": 77, "time_delta": -9, "visitors_paid": 387, "visitors_seo": 491, "events_paid": 21, "events_seo": 37, "ev_visitors_paid": 8, "ev_visitors_seo": 14, "cr_paid": 2.1, "cr_seo": 2.9, "cr_delta": -0.8}, {"page": "/epargne/retraite-independant-tns", "br_paid": 0.88, "br_seo": 0.789473684211, "br_delta": 0.1, "time_paid": 81, "time_seo": 79, "time_delta": 2, "visitors_paid": 72, "visitors_seo": 20, "events_paid": 7, "events_seo": 17, "ev_visitors_paid": 2, "ev_visitors_seo": 3, "cr_paid": 2.8, "cr_seo": 15.0, "cr_delta": -12.2}, {"page": "/epargne/taux-ldds", "br_paid": 0.875, "br_seo": 0.880733944954, "br_delta": -0.0, "time_paid": 43, "time_seo": 73, "time_delta": -30, "visitors_paid": 55, "visitors_seo": 108, "events_paid": 1, "events_seo": 19, "ev_visitors_paid": 1, "ev_visitors_seo": 3, "cr_paid": 1.8, "cr_seo": 2.8, "cr_delta": -1.0}, {"page": "/epargne/taux-livret-a", "br_paid": 0.802139037433, "br_seo": 0.84693877551, "br_delta": -0.0, "time_paid": 109, "time_seo": 68, "time_delta": 41, "visitors_paid": 196, "visitors_seo": 111, "events_paid": 9, "events_seo": 11, "ev_visitors_paid": 3, "ev_visitors_seo": 1, "cr_paid": 1.5, "cr_seo": 0.9, "cr_delta": 0.6}, {"page": "/epargne/trois-types-de-depenses-un-seul-peut-enrichir", "br_paid": 0.0, "br_seo": 0.833333333333, "br_delta": -0.8, "time_paid": 0, "time_seo": 35, "time_delta": -35, "visitors_paid": 0, "visitors_seo": 18, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/epargne/unite-de-compte", "br_paid": 0.859437751004, "br_seo": 0.862068965517, "br_delta": -0.0, "time_paid": 81, "time_seo": 97, "time_delta": -16, "visitors_paid": 259, "visitors_seo": 33, "events_paid": 19, "events_seo": 3, "ev_visitors_paid": 3, "ev_visitors_seo": 1, "cr_paid": 1.2, "cr_seo": 3.0, "cr_delta": -1.8}, {"page": "/episod", "br_paid": 0, "br_seo": 0.774193548387, "br_delta": -0.8, "time_paid": 0, "time_seo": 91, "time_delta": -91, "visitors_paid": 0, "visitors_seo": 29, "events_paid": 0, "events_seo": 2, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 3.4, "cr_delta": -3.4}, {"page": "/espace-presse", "br_paid": 0.0, "br_seo": 0.166666666667, "br_delta": -0.2, "time_paid": 7, "time_seo": 50, "time_delta": -43, "visitors_paid": 5, "visitors_seo": 41, "events_paid": 0, "events_seo": 6, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 4.9, "cr_delta": -4.9}, {"page": "/espace-presse/lancement-ramify-crypto", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 133, "time_delta": -133, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/espace-presse/lancement-x-fund", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0, "cr_delta": 0}, {"page": "/espace-presse/outil-fiscalite", "br_paid": 0.75, "br_seo": 0, "br_delta": 0.8, "time_paid": 10, "time_seo": 0, "time_delta": 10, "visitors_paid": 19, "visitors_seo": 0, "events_paid": 5, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 10.5, "cr_seo": 0, "cr_delta": 10.5}, {"page": "/espace-presse/ramify-ironman-france-nice", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 5, "time_delta": -5, "visitors_paid": 0, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/espace-presse/une-assurance-vie-luxembourgeoise-100-digitale-accessible-des-100-000-eu", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 4, "time_delta": -4, "visitors_paid": 0, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/etf", "br_paid": 0.88036809816, "br_seo": 0.571428571429, "br_delta": 0.3, "time_paid": 90, "time_seo": 80, "time_delta": 10, "visitors_paid": 361, "visitors_seo": 49, "events_paid": 64, "events_seo": 0, "ev_visitors_paid": 6, "ev_visitors_seo": 0, "cr_paid": 1.7, "cr_seo": 0.0, "cr_delta": 1.7}, {"page": "/feed", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 6, "time_delta": -6, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/finance-quantitative", "br_paid": 0.666666666667, "br_seo": 0.829787234043, "br_delta": -0.2, "time_paid": 44, "time_seo": 100, "time_delta": -56, "visitors_paid": 6, "visitors_seo": 99, "events_paid": 0, "events_seo": 19, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 1.0, "cr_delta": -1.0}, {"page": "/finance-quantitative/calcul-performances-methodologie-ramify", "br_paid": 1.0, "br_seo": 0.375, "br_delta": 0.6, "time_paid": 75, "time_seo": 35, "time_delta": 40, "visitors_paid": 9, "visitors_seo": 16, "events_paid": 0, "events_seo": 4, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 6.2, "cr_delta": -6.2}, {"page": "/finance-quantitative/comment-fait-on-pour-optimiser-votre-epargne", "br_paid": 0.0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 6, "time_delta": -6, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/finance-quantitative/democratiser-investissement-haut-de-gamme-la-performance-dun-portefeuille", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 32, "time_delta": -32, "visitors_paid": 0, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/finance-quantitative/ramify-rebalancing-tool-arbitrage-optimise-portefeuille", "br_paid": 0, "br_seo": 0.4, "br_delta": -0.4, "time_paid": 0, "time_seo": 50, "time_delta": -50, "visitors_paid": 0, "visitors_seo": 5, "events_paid": 0, "events_seo": 3, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 20.0, "cr_delta": -20.0}, {"page": "/fiscalite", "br_paid": 0.0, "br_seo": 0.0833333333333, "br_delta": -0.1, "time_paid": 20, "time_seo": 21, "time_delta": -1, "visitors_paid": 64, "visitors_seo": 112, "events_paid": 4, "events_seo": 6, "ev_visitors_paid": 2, "ev_visitors_seo": 3, "cr_paid": 3.1, "cr_seo": 2.7, "cr_delta": 0.4}, {"page": "/gestion-de-patrimoine/alternatives-family-office", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 22, "time_seo": 49, "time_delta": -27, "visitors_paid": 1, "visitors_seo": 9, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/banque-privee", "br_paid": 0.791666666667, "br_seo": 0.812765957447, "br_delta": -0.0, "time_paid": 87, "time_seo": 61, "time_delta": 26, "visitors_paid": 27, "visitors_seo": 243, "events_paid": 15, "events_seo": 36, "ev_visitors_paid": 2, "ev_visitors_seo": 6, "cr_paid": 7.4, "cr_seo": 2.5, "cr_delta": 4.9}, {"page": "/gestion-de-patrimoine/banque-privee-en-ligne", "br_paid": 0.84, "br_seo": 0.734693877551, "br_delta": 0.1, "time_paid": 54, "time_seo": 128, "time_delta": -74, "visitors_paid": 53, "visitors_seo": 57, "events_paid": 10, "events_seo": 19, "ev_visitors_paid": 2, "ev_visitors_seo": 4, "cr_paid": 3.8, "cr_seo": 7.0, "cr_delta": -3.2}, {"page": "/gestion-de-patrimoine/bilan-2023-perspectives-2024-macro-economie", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 5, "time_delta": -5, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/bspce", "br_paid": 0.923664122137, "br_seo": 0.9375, "br_delta": -0.0, "time_paid": 77, "time_seo": 38, "time_delta": 39, "visitors_paid": 249, "visitors_seo": 16, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/cash-out", "br_paid": 0.894736842105, "br_seo": 0.886363636364, "br_delta": 0.0, "time_paid": 30, "time_seo": 178, "time_delta": -148, "visitors_paid": 16, "visitors_seo": 85, "events_paid": 4, "events_seo": 11, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 6.2, "cr_seo": 1.2, "cr_delta": 5.0}, {"page": "/gestion-de-patrimoine/club-deal-immobilier", "br_paid": 0.764705882353, "br_seo": 0.63829787234, "br_delta": 0.1, "time_paid": 77, "time_seo": 80, "time_delta": -3, "visitors_paid": 17, "visitors_seo": 46, "events_paid": 16, "events_seo": 33, "ev_visitors_paid": 3, "ev_visitors_seo": 4, "cr_paid": 17.6, "cr_seo": 8.7, "cr_delta": 8.9}, {"page": "/gestion-de-patrimoine/coaching-pratique-besoin-cash", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 26, "time_delta": -26, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/coaching-pratique-finances-ou-commencer", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 9, "time_delta": -9, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/combiner-achat-residence-principale-et-investissement-locatif", "br_paid": 0.916666666667, "br_seo": 1.0, "br_delta": -0.1, "time_paid": 90, "time_seo": 36, "time_delta": 54, "visitors_paid": 13, "visitors_seo": 19, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/compte-titres-francais-ou-luxembourgeois-personne-morale", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 149, "time_delta": -149, "visitors_paid": 0, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/compte-titres-luxembourg-societe", "br_paid": 0.0, "br_seo": 0.9375, "br_delta": -0.9, "time_paid": 0, "time_seo": 33, "time_delta": -33, "visitors_paid": 1, "visitors_seo": 19, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/contrat-capitalisation-francais-ou-luxembourgeois-personne-morale", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/contrat-capitalisation-luxembourgeois-personne-morale", "br_paid": 0, "br_seo": 0.666666666667, "br_delta": -0.7, "time_paid": 0, "time_seo": 332, "time_delta": -332, "visitors_paid": 0, "visitors_seo": 8, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/contrat-capitalisation-personne-morale", "br_paid": 0, "br_seo": 0.5, "br_delta": -0.5, "time_paid": 0, "time_seo": 276, "time_delta": -276, "visitors_paid": 0, "visitors_seo": 4, "events_paid": 0, "events_seo": 7, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0, "cr_seo": 50.0, "cr_delta": -50.0}, {"page": "/gestion-de-patrimoine/credit-lombard", "br_paid": 0.0, "br_seo": 0.830188679245, "br_delta": -0.8, "time_paid": 138, "time_seo": 123, "time_delta": 15, "visitors_paid": 5, "visitors_seo": 268, "events_paid": 0, "events_seo": 53, "ev_visitors_paid": 0, "ev_visitors_seo": 8, "cr_paid": 0.0, "cr_seo": 3.0, "cr_delta": -3.0}, {"page": "/gestion-de-patrimoine/crowdfunding-immobilier", "br_paid": 0.808219178082, "br_seo": 0.6, "br_delta": 0.2, "time_paid": 140, "time_seo": 89, "time_delta": 51, "visitors_paid": 71, "visitors_seo": 12, "events_paid": 1, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 1.4, "cr_seo": 0.0, "cr_delta": 1.4}, {"page": "/gestion-de-patrimoine/crowdfunding-ou-club-deal-immobilier", "br_paid": 0.7, "br_seo": 0.714285714286, "br_delta": -0.0, "time_paid": 166, "time_seo": 82, "time_delta": 84, "visitors_paid": 10, "visitors_seo": 16, "events_paid": 2, "events_seo": 13, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 10.0, "cr_seo": 6.2, "cr_delta": 3.8}, {"page": "/gestion-de-patrimoine/donation", "br_paid": 0.87987012987, "br_seo": 0.833333333333, "br_delta": 0.0, "time_paid": 99, "time_seo": 127, "time_delta": -28, "visitors_paid": 332, "visitors_seo": 13, "events_paid": 9, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 0.6, "cr_seo": 0.0, "cr_delta": 0.6}, {"page": "/gestion-de-patrimoine/donation-100000-euros", "br_paid": 0.911221590909, "br_seo": 0.859375, "br_delta": 0.1, "time_paid": 115, "time_seo": 115, "time_delta": 0, "visitors_paid": 1395, "visitors_seo": 629, "events_paid": 20, "events_seo": 26, "ev_visitors_paid": 6, "ev_visitors_seo": 3, "cr_paid": 0.4, "cr_seo": 0.5, "cr_delta": -0.1}, {"page": "/gestion-de-patrimoine/donation-cession", "br_paid": 1.0, "br_seo": 1.0, "br_delta": 0.0, "time_paid": 320, "time_seo": 173, "time_delta": 147, "visitors_paid": 3, "visitors_seo": 20, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/exit-startup", "br_paid": 1.0, "br_seo": 0.933333333333, "br_delta": 0.1, "time_paid": 0, "time_seo": 57, "time_delta": -57, "visitors_paid": 1, "visitors_seo": 16, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/family-office", "br_paid": 0.938388625592, "br_seo": 0.842105263158, "br_delta": 0.1, "time_paid": 71, "time_seo": 100, "time_delta": -29, "visitors_paid": 203, "visitors_seo": 166, "events_paid": 7, "events_seo": 155, "ev_visitors_paid": 2, "ev_visitors_seo": 12, "cr_paid": 1.0, "cr_seo": 7.2, "cr_delta": -6.2}, {"page": "/gestion-de-patrimoine/fiscalite-art", "br_paid": 0.0, "br_seo": 0.857142857143, "br_delta": -0.9, "time_paid": 0, "time_seo": 83, "time_delta": -83, "visitors_paid": 1, "visitors_seo": 12, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/fiscalite-expatrie", "br_paid": 0.923076923077, "br_seo": 0.907692307692, "br_delta": 0.0, "time_paid": 113, "time_seo": 77, "time_delta": 36, "visitors_paid": 52, "visitors_seo": 67, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/flat-tax", "br_paid": 0.896568160153, "br_seo": 0.889908256881, "br_delta": 0.0, "time_paid": 84, "time_seo": 79, "time_delta": 5, "visitors_paid": 2026, "visitors_seo": 1380, "events_paid": 60, "events_seo": 35, "ev_visitors_paid": 16, "ev_visitors_seo": 8, "cr_paid": 0.8, "cr_seo": 0.6, "cr_delta": 0.2}, {"page": "/gestion-de-patrimoine/fonds-diversifie", "br_paid": 0.0, "br_seo": 0.8, "br_delta": -0.8, "time_paid": 0, "time_seo": 56, "time_delta": -56, "visitors_paid": 1, "visitors_seo": 14, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/fonds-investissement-alternatif", "br_paid": 0.842105263158, "br_seo": 0.914893617021, "br_delta": -0.1, "time_paid": 40, "time_seo": 103, "time_delta": -63, "visitors_paid": 19, "visitors_seo": 47, "events_paid": 0, "events_seo": 2, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 2.1, "cr_delta": -2.1}, {"page": "/gestion-de-patrimoine/fonds-monetaire", "br_paid": 0.809523809524, "br_seo": 0.821782178218, "br_delta": -0.0, "time_paid": 96, "time_seo": 119, "time_delta": -23, "visitors_paid": 112, "visitors_seo": 105, "events_paid": 4, "events_seo": 5, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 0.9, "cr_seo": 1.0, "cr_delta": -0.1}, {"page": "/gestion-de-patrimoine/global-investment-perspectives-2026", "br_paid": 1.0, "br_seo": 0.333333333333, "br_delta": 0.7, "time_paid": 18, "time_seo": 58, "time_delta": -40, "visitors_paid": 5, "visitors_seo": 10, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/impot-fortune-immobiliere", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 144, "time_seo": 0, "time_delta": 144, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/ingenierie-patrimoniale", "br_paid": 0.0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 10, "time_seo": 102, "time_delta": -92, "visitors_paid": 1, "visitors_seo": 12, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/investir-art", "br_paid": 0.863636363636, "br_seo": 0.758620689655, "br_delta": 0.1, "time_paid": 88, "time_seo": 68, "time_delta": 20, "visitors_paid": 45, "visitors_seo": 59, "events_paid": 6, "events_seo": 47, "ev_visitors_paid": 2, "ev_visitors_seo": 6, "cr_paid": 4.4, "cr_seo": 10.2, "cr_delta": -5.8}, {"page": "/gestion-de-patrimoine/investir-immobilier-locatif", "br_paid": 0.913793103448, "br_seo": 0, "br_delta": 0.9, "time_paid": 40, "time_seo": 0, "time_delta": 40, "visitors_paid": 115, "visitors_seo": 0, "events_paid": 4, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 0.9, "cr_seo": 0, "cr_delta": 0.9}, {"page": "/gestion-de-patrimoine/investir-or", "br_paid": 0.899755501222, "br_seo": 0.888888888889, "br_delta": 0.0, "time_paid": 103, "time_seo": 142, "time_delta": -39, "visitors_paid": 803, "visitors_seo": 19, "events_paid": 65, "events_seo": 4, "ev_visitors_paid": 9, "ev_visitors_seo": 1, "cr_paid": 1.1, "cr_seo": 5.3, "cr_delta": -4.2}, {"page": "/gestion-de-patrimoine/investissement-vert", "br_paid": 1.0, "br_seo": 0.8, "br_delta": 0.2, "time_paid": 20, "time_seo": 97, "time_delta": -77, "visitors_paid": 5, "visitors_seo": 39, "events_paid": 0, "events_seo": 35, "ev_visitors_paid": 0, "ev_visitors_seo": 3, "cr_paid": 0.0, "cr_seo": 7.7, "cr_delta": -7.7}, {"page": "/gestion-de-patrimoine/meilleur-fonds-alternatif", "br_paid": 0.9, "br_seo": 0.794871794872, "br_delta": 0.1, "time_paid": 78, "time_seo": 88, "time_delta": -10, "visitors_paid": 51, "visitors_seo": 116, "events_paid": 3, "events_seo": 6, "ev_visitors_paid": 1, "ev_visitors_seo": 3, "cr_paid": 2.0, "cr_seo": 2.6, "cr_delta": -0.6}, {"page": "/gestion-de-patrimoine/meilleur-placement-senior", "br_paid": 0.802494802495, "br_seo": 0.862849533955, "br_delta": -0.1, "time_paid": 128, "time_seo": 113, "time_delta": 15, "visitors_paid": 479, "visitors_seo": 742, "events_paid": 76, "events_seo": 66, "ev_visitors_paid": 13, "ev_visitors_seo": 14, "cr_paid": 2.7, "cr_seo": 1.9, "cr_delta": 0.8}, {"page": "/gestion-de-patrimoine/meilleures-banques-privees", "br_paid": 0.816129032258, "br_seo": 0.860557768924, "br_delta": -0.0, "time_paid": 94, "time_seo": 78, "time_delta": 16, "visitors_paid": 295, "visitors_seo": 494, "events_paid": 81, "events_seo": 135, "ev_visitors_paid": 13, "ev_visitors_seo": 18, "cr_paid": 4.4, "cr_seo": 3.6, "cr_delta": 0.8}, {"page": "/gestion-de-patrimoine/meilleures-plateformes", "br_paid": 0.678571428571, "br_seo": 0.666666666667, "br_delta": 0.0, "time_paid": 97, "time_seo": 82, "time_delta": 15, "visitors_paid": 68, "visitors_seo": 31, "events_paid": 47, "events_seo": 29, "ev_visitors_paid": 3, "ev_visitors_seo": 3, "cr_paid": 4.4, "cr_seo": 9.7, "cr_delta": -5.3}, {"page": "/gestion-de-patrimoine/meilleurs-cabinets", "br_paid": 0.865079365079, "br_seo": 0.834821428571, "br_delta": 0.0, "time_paid": 117, "time_seo": 120, "time_delta": -3, "visitors_paid": 260, "visitors_seo": 669, "events_paid": 97, "events_seo": 219, "ev_visitors_paid": 10, "ev_visitors_seo": 19, "cr_paid": 3.8, "cr_seo": 2.8, "cr_delta": 1.0}, {"page": "/gestion-de-patrimoine/meilleurs-fonds-monetaires", "br_paid": 0.818181818182, "br_seo": 0.842857142857, "br_delta": -0.0, "time_paid": 141, "time_seo": 112, "time_delta": 29, "visitors_paid": 110, "visitors_seo": 281, "events_paid": 6, "events_seo": 45, "ev_visitors_paid": 2, "ev_visitors_seo": 8, "cr_paid": 1.8, "cr_seo": 2.8, "cr_delta": -1.0}, {"page": "/gestion-de-patrimoine/meilleurs-placements-financiers", "br_paid": 0.812734082397, "br_seo": 0.77358490566, "br_delta": 0.0, "time_paid": 77, "time_seo": 31, "time_delta": 46, "visitors_paid": 265, "visitors_seo": 60, "events_paid": 25, "events_seo": 26, "ev_visitors_paid": 3, "ev_visitors_seo": 2, "cr_paid": 1.1, "cr_seo": 3.3, "cr_delta": -2.2}, {"page": "/gestion-de-patrimoine/meilleurs-robo-advisors", "br_paid": 0.0, "br_seo": 0.285714285714, "br_delta": -0.3, "time_paid": 89, "time_seo": 148, "time_delta": -59, "visitors_paid": 4, "visitors_seo": 18, "events_paid": 0, "events_seo": 65, "ev_visitors_paid": 0, "ev_visitors_seo": 3, "cr_paid": 0.0, "cr_seo": 16.7, "cr_delta": -16.7}, {"page": "/gestion-de-patrimoine/montage-holding", "br_paid": 0.880281690141, "br_seo": 0.75, "br_delta": 0.1, "time_paid": 106, "time_seo": 105, "time_delta": 1, "visitors_paid": 138, "visitors_seo": 28, "events_paid": 11, "events_seo": 21, "ev_visitors_paid": 2, "ev_visitors_seo": 3, "cr_paid": 1.4, "cr_seo": 10.7, "cr_delta": -9.3}, {"page": "/gestion-de-patrimoine/opci", "br_paid": 1.0, "br_seo": 1.0, "br_delta": 0.0, "time_paid": 64, "time_seo": 68, "time_delta": -4, "visitors_paid": 10, "visitors_seo": 9, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/opcvm", "br_paid": 0.854166666667, "br_seo": 0.727272727273, "br_delta": 0.1, "time_paid": 107, "time_seo": 129, "time_delta": -22, "visitors_paid": 99, "visitors_seo": 17, "events_paid": 0, "events_seo": 8, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 5.9, "cr_delta": -5.9}, {"page": "/gestion-de-patrimoine/pierre-papier", "br_paid": 0.0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 58, "time_delta": -58, "visitors_paid": 0, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/placement-court-terme", "br_paid": 0.860986547085, "br_seo": 0.826923076923, "br_delta": 0.0, "time_paid": 97, "time_seo": 69, "time_delta": 28, "visitors_paid": 226, "visitors_seo": 123, "events_paid": 78, "events_seo": 3, "ev_visitors_paid": 6, "ev_visitors_seo": 1, "cr_paid": 2.7, "cr_seo": 0.8, "cr_delta": 1.9}, {"page": "/gestion-de-patrimoine/placement-luxembourg", "br_paid": 0, "br_seo": 0.857142857143, "br_delta": -0.9, "time_paid": 0, "time_seo": 122, "time_delta": -122, "visitors_paid": 0, "visitors_seo": 18, "events_paid": 0, "events_seo": 11, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 5.6, "cr_delta": -5.6}, {"page": "/gestion-de-patrimoine/placement-tresorerie-entreprise", "br_paid": 0.756756756757, "br_seo": 0.606060606061, "br_delta": 0.2, "time_paid": 107, "time_seo": 140, "time_delta": -33, "visitors_paid": 37, "visitors_seo": 30, "events_paid": 23, "events_seo": 5, "ev_visitors_paid": 5, "ev_visitors_seo": 3, "cr_paid": 13.5, "cr_seo": 10.0, "cr_delta": 3.5}, {"page": "/gestion-de-patrimoine/placement-tresorerie-holding", "br_paid": 0, "br_seo": 0.9, "br_delta": -0.9, "time_paid": 0, "time_seo": 87, "time_delta": -87, "visitors_paid": 0, "visitors_seo": 12, "events_paid": 0, "events_seo": 26, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 8.3, "cr_delta": -8.3}, {"page": "/gestion-de-patrimoine/placer-argent-rapporte-mensuellement", "br_paid": 0.888888888889, "br_seo": 0.863636363636, "br_delta": 0.0, "time_paid": 112, "time_seo": 94, "time_delta": 18, "visitors_paid": 37, "visitors_seo": 93, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/placer-heritage", "br_paid": 0.833333333333, "br_seo": 0.868421052632, "br_delta": -0.0, "time_paid": 135, "time_seo": 184, "time_delta": -49, "visitors_paid": 25, "visitors_seo": 37, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/plateforme", "br_paid": 1.0, "br_seo": 0.5, "br_delta": 0.5, "time_paid": 22, "time_seo": 42, "time_delta": -20, "visitors_paid": 19, "visitors_seo": 17, "events_paid": 0, "events_seo": 17, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 11.8, "cr_delta": -11.8}, {"page": "/gestion-de-patrimoine/pret-immobilier-sans-apport", "br_paid": 0.0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 73, "time_delta": -73, "visitors_paid": 1, "visitors_seo": 4, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/proprietaire-vs-locataire-1", "br_paid": 0.0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 34, "time_delta": -34, "visitors_paid": 0, "visitors_seo": 4, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/proprietaire-vs-locataire-2", "br_paid": 0.8, "br_seo": 0.833333333333, "br_delta": -0.0, "time_paid": 15, "time_seo": 61, "time_delta": -46, "visitors_paid": 5, "visitors_seo": 5, "events_paid": 0, "events_seo": 1, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 20.0, "cr_delta": -20.0}, {"page": "/gestion-de-patrimoine/proprietaire-vs-locataire-3", "br_paid": 0.841463414634, "br_seo": 0.894736842105, "br_delta": -0.1, "time_paid": 72, "time_seo": 37, "time_delta": 35, "visitors_paid": 74, "visitors_seo": 19, "events_paid": 4, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 2.7, "cr_seo": 0.0, "cr_delta": 2.7}, {"page": "/gestion-de-patrimoine/proprietaire-vs-locataire-episode-4-le-guide-pour-savoir-ce-qui-vous-correspond", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 140, "time_seo": 33, "time_delta": 107, "visitors_paid": 8, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/robo-advisor", "br_paid": 1.0, "br_seo": 0.733333333333, "br_delta": 0.3, "time_paid": 103, "time_seo": 83, "time_delta": 20, "visitors_paid": 7, "visitors_seo": 16, "events_paid": 0, "events_seo": 5, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 6.2, "cr_delta": -6.2}, {"page": "/gestion-de-patrimoine/sci", "br_paid": 0.800904977376, "br_seo": 0.0, "br_delta": 0.8, "time_paid": 106, "time_seo": 554, "time_delta": -448, "visitors_paid": 222, "visitors_seo": 1, "events_paid": 11, "events_seo": 3, "ev_visitors_paid": 4, "ev_visitors_seo": 1, "cr_paid": 1.8, "cr_seo": 100.0, "cr_delta": -98.2}, {"page": "/gestion-de-patrimoine/scpi-ou-investissement-locatif", "br_paid": 0.0, "br_seo": 0.5, "br_delta": -0.5, "time_paid": 115, "time_seo": 61, "time_delta": 54, "visitors_paid": 4, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/scpi-ou-siic", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 3, "time_seo": 0, "time_delta": 3, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/gestion-de-patrimoine/taux-marginal-imposition", "br_paid": 0.831005586592, "br_seo": 0.777777777778, "br_delta": 0.1, "time_paid": 98, "time_seo": 96, "time_delta": 2, "visitors_paid": 1402, "visitors_seo": 168, "events_paid": 37, "events_seo": 21, "ev_visitors_paid": 10, "ev_visitors_seo": 1, "cr_paid": 0.7, "cr_seo": 0.6, "cr_delta": 0.1}, {"page": "/gestion-de-patrimoine/transmission", "br_paid": 0.85393258427, "br_seo": 0.8, "br_delta": 0.1, "time_paid": 121, "time_seo": 54, "time_delta": 67, "visitors_paid": 112, "visitors_seo": 12, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/ironman", "br_paid": 0.0, "br_seo": 0.75, "br_delta": -0.8, "time_paid": 14, "time_seo": 40, "time_delta": -26, "visitors_paid": 2, "visitors_seo": 62, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/ironman](https://www.ramify.fr/ironman", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 14, "time_delta": -14, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/legal/mentions", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 55, "time_seo": 84, "time_delta": -29, "visitors_paid": 5, "visitors_seo": 30, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/legal/politique-de-confidentialite", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 113, "time_delta": -113, "visitors_paid": 0, "visitors_seo": 3, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/legal/politique-des-cookies", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 15, "time_delta": -15, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/livre-vert", "br_paid": 0.0, "br_seo": 0.0909090909091, "br_delta": -0.1, "time_paid": 20, "time_seo": 68, "time_delta": -48, "visitors_paid": 2, "visitors_seo": 18, "events_paid": 0, "events_seo": 1, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 5.6, "cr_delta": -5.6}, {"page": "/newsletter", "br_paid": 0.666666666667, "br_seo": 0.36, "br_delta": 0.3, "time_paid": 63, "time_seo": 22, "time_delta": 41, "visitors_paid": 6, "visitors_seo": 41, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/offre", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 3, "time_delta": -3, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/outils", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 1, "time_delta": -1, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/outils/caaccord%20i%20d%20cdtilatrice-interet-compose", "br_paid": 1.0, "br_seo": 0, "br_delta": 1.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/outils/calculatrice-interet-compose", "br_paid": 0.842351002472, "br_seo": 0.795543905636, "br_delta": 0.0, "time_paid": 87, "time_seo": 88, "time_delta": -1, "visitors_paid": 3410, "visitors_seo": 770, "events_paid": 333, "events_seo": 75, "ev_visitors_paid": 49, "ev_visitors_seo": 18, "cr_paid": 1.4, "cr_seo": 2.3, "cr_delta": -0.9}, {"page": "/outils/simulateur-droit-succession", "br_paid": 0.813616071429, "br_seo": 0.761437908497, "br_delta": 0.1, "time_paid": 77, "time_seo": 67, "time_delta": 10, "visitors_paid": 870, "visitors_seo": 900, "events_paid": 61, "events_seo": 163, "ev_visitors_paid": 18, "ev_visitors_seo": 30, "cr_paid": 2.1, "cr_seo": 3.3, "cr_delta": -1.2}, {"page": "/pea", "br_paid": 0.867289719626, "br_seo": 0.303278688525, "br_delta": 0.6, "time_paid": 113, "time_seo": 67, "time_delta": 46, "visitors_paid": 542, "visitors_seo": 170, "events_paid": 64, "events_seo": 574, "ev_visitors_paid": 9, "ev_visitors_seo": 59, "cr_paid": 1.7, "cr_seo": 34.7, "cr_delta": -33.0}, {"page": "/pea/choisir", "br_paid": 0.828571428571, "br_seo": 0.666666666667, "br_delta": 0.2, "time_paid": 91, "time_seo": 170, "time_delta": -79, "visitors_paid": 40, "visitors_seo": 23, "events_paid": 37, "events_seo": 0, "ev_visitors_paid": 3, "ev_visitors_seo": 0, "cr_paid": 7.5, "cr_seo": 0.0, "cr_delta": 7.5}, {"page": "/pea/etf", "br_paid": 0.776513761468, "br_seo": 0.79337401918, "br_delta": -0.0, "time_paid": 102, "time_seo": 107, "time_delta": -5, "visitors_paid": 2648, "visitors_seo": 3323, "events_paid": 345, "events_seo": 505, "ev_visitors_paid": 91, "ev_visitors_seo": 110, "cr_paid": 3.4, "cr_seo": 3.3, "cr_delta": 0.1}, {"page": "/pea/fiscalite", "br_paid": 0.866666666667, "br_seo": 0.771084337349, "br_delta": 0.1, "time_paid": 111, "time_seo": 91, "time_delta": 20, "visitors_paid": 53, "visitors_seo": 88, "events_paid": 2, "events_seo": 36, "ev_visitors_paid": 2, "ev_visitors_seo": 5, "cr_paid": 3.8, "cr_seo": 5.7, "cr_delta": -1.9}, {"page": "/pea/frais", "br_paid": 0.915789473684, "br_seo": 0.866900175131, "br_delta": 0.0, "time_paid": 83, "time_seo": 59, "time_delta": 24, "visitors_paid": 95, "visitors_seo": 561, "events_paid": 6, "events_seo": 65, "ev_visitors_paid": 1, "ev_visitors_seo": 8, "cr_paid": 1.1, "cr_seo": 1.4, "cr_delta": -0.3}, {"page": "/pea/gestion-pilotee", "br_paid": 0.826923076923, "br_seo": 0.697674418605, "br_delta": 0.1, "time_paid": 105, "time_seo": 137, "time_delta": -32, "visitors_paid": 71, "visitors_seo": 214, "events_paid": 39, "events_seo": 156, "ev_visitors_paid": 4, "ev_visitors_seo": 12, "cr_paid": 5.6, "cr_seo": 5.6, "cr_delta": 0.0}, {"page": "/pea/jeune", "br_paid": 0.88, "br_seo": 0.833333333333, "br_delta": 0.0, "time_paid": 94, "time_seo": 75, "time_delta": 19, "visitors_paid": 109, "visitors_seo": 58, "events_paid": 5, "events_seo": 5, "ev_visitors_paid": 2, "ev_visitors_seo": 1, "cr_paid": 1.8, "cr_seo": 1.7, "cr_delta": 0.1}, {"page": "/pea/meilleur", "br_paid": 0.885416666667, "br_seo": 0.784615384615, "br_delta": 0.1, "time_paid": 89, "time_seo": 79, "time_delta": 10, "visitors_paid": 298, "visitors_seo": 157, "events_paid": 70, "events_seo": 66, "ev_visitors_paid": 8, "ev_visitors_seo": 8, "cr_paid": 2.7, "cr_seo": 5.1, "cr_delta": -2.4}, {"page": "/pea/perte", "br_paid": 1.0, "br_seo": 0.877192982456, "br_delta": 0.1, "time_paid": 31, "time_seo": 55, "time_delta": -24, "visitors_paid": 9, "visitors_seo": 279, "events_paid": 0, "events_seo": 39, "ev_visitors_paid": 0, "ev_visitors_seo": 4, "cr_paid": 0.0, "cr_seo": 1.4, "cr_delta": -1.4}, {"page": "/pea/plafond", "br_paid": 0.84375, "br_seo": 0.881748071979, "br_delta": -0.0, "time_paid": 85, "time_seo": 103, "time_delta": -18, "visitors_paid": 238, "visitors_seo": 390, "events_paid": 7, "events_seo": 30, "ev_visitors_paid": 4, "ev_visitors_seo": 10, "cr_paid": 1.7, "cr_seo": 2.6, "cr_delta": -0.9}, {"page": "/pea/retrait", "br_paid": 0.877702285361, "br_seo": 0.882776349614, "br_delta": -0.0, "time_paid": 91, "time_seo": 84, "time_delta": 7, "visitors_paid": 1595, "visitors_seo": 1879, "events_paid": 103, "events_seo": 55, "ev_visitors_paid": 14, "ev_visitors_seo": 14, "cr_paid": 0.9, "cr_seo": 0.7, "cr_delta": 0.2}, {"page": "/pea/succession", "br_paid": 0.820796460177, "br_seo": 0.805766312595, "br_delta": 0.0, "time_paid": 156, "time_seo": 136, "time_delta": 20, "visitors_paid": 444, "visitors_seo": 632, "events_paid": 21, "events_seo": 24, "ev_visitors_paid": 9, "ev_visitors_seo": 11, "cr_paid": 2.0, "cr_seo": 1.7, "cr_delta": 0.3}, {"page": "/pea/transfert", "br_paid": 0.928571428571, "br_seo": 0.821428571429, "br_delta": 0.1, "time_paid": 45, "time_seo": 96, "time_delta": -51, "visitors_paid": 56, "visitors_seo": 174, "events_paid": 1, "events_seo": 34, "ev_visitors_paid": 1, "ev_visitors_seo": 2, "cr_paid": 1.8, "cr_seo": 1.1, "cr_delta": 0.7}, {"page": "/per", "br_paid": 0.730769230769, "br_seo": 0.448275862069, "br_delta": 0.3, "time_paid": 126, "time_seo": 70, "time_delta": 56, "visitors_paid": 41, "visitors_seo": 51, "events_paid": 2, "events_seo": 18, "ev_visitors_paid": 1, "ev_visitors_seo": 2, "cr_paid": 2.4, "cr_seo": 3.9, "cr_delta": -1.5}, {"page": "/per/choisir", "br_paid": 1.0, "br_seo": 0.6, "br_delta": 0.4, "time_paid": 62, "time_seo": 123, "time_delta": -61, "visitors_paid": 6, "visitors_seo": 14, "events_paid": 0, "events_seo": 10, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 7.1, "cr_delta": -7.1}, {"page": "/per/deblocage-sortie", "br_paid": 0.920379839299, "br_seo": 0.933333333333, "br_delta": -0.0, "time_paid": 69, "time_seo": 67, "time_delta": 2, "visitors_paid": 1337, "visitors_seo": 21, "events_paid": 78, "events_seo": 0, "ev_visitors_paid": 8, "ev_visitors_seo": 0, "cr_paid": 0.6, "cr_seo": 0.0, "cr_delta": 0.6}, {"page": "/per/fiscalite", "br_paid": 0.832560834299, "br_seo": 0.642857142857, "br_delta": 0.2, "time_paid": 74, "time_seo": 99, "time_delta": -25, "visitors_paid": 1699, "visitors_seo": 28, "events_paid": 131, "events_seo": 0, "ev_visitors_paid": 28, "ev_visitors_seo": 0, "cr_paid": 1.6, "cr_seo": 0.0, "cr_delta": 1.6}, {"page": "/per/frais", "br_paid": 0.90243902439, "br_seo": 0.680555555556, "br_delta": 0.2, "time_paid": 62, "time_seo": 82, "time_delta": -20, "visitors_paid": 50, "visitors_seo": 79, "events_paid": 0, "events_seo": 70, "ev_visitors_paid": 0, "ev_visitors_seo": 8, "cr_paid": 0.0, "cr_seo": 10.1, "cr_delta": -10.1}, {"page": "/per/gestion-pilotee", "br_paid": 0.652173913043, "br_seo": 0.37037037037, "br_delta": 0.3, "time_paid": 109, "time_seo": 114, "time_delta": -5, "visitors_paid": 31, "visitors_seo": 37, "events_paid": 20, "events_seo": 83, "ev_visitors_paid": 3, "ev_visitors_seo": 6, "cr_paid": 9.7, "cr_seo": 16.2, "cr_delta": -6.5}, {"page": "/per/meilleur", "br_paid": 0.832512315271, "br_seo": 0.458333333333, "br_delta": 0.4, "time_paid": 91, "time_seo": 101, "time_delta": -10, "visitors_paid": 208, "visitors_seo": 73, "events_paid": 237, "events_seo": 82, "ev_visitors_paid": 17, "ev_visitors_seo": 4, "cr_paid": 8.2, "cr_seo": 5.5, "cr_delta": 2.7}, {"page": "/per/perte-capital", "br_paid": 0.6, "br_seo": 0.73023255814, "br_delta": -0.1, "time_paid": 96, "time_seo": 50, "time_delta": 46, "visitors_paid": 5, "visitors_seo": 216, "events_paid": 0, "events_seo": 36, "ev_visitors_paid": 0, "ev_visitors_seo": 8, "cr_paid": 0.0, "cr_seo": 3.7, "cr_delta": -3.7}, {"page": "/per/plafond", "br_paid": 0.891304347826, "br_seo": 0.868852459016, "br_delta": 0.0, "time_paid": 107, "time_seo": 88, "time_delta": 19, "visitors_paid": 326, "visitors_seo": 134, "events_paid": 23, "events_seo": 3, "ev_visitors_paid": 4, "ev_visitors_seo": 3, "cr_paid": 1.2, "cr_seo": 2.2, "cr_delta": -1.0}, {"page": "/per/private-equity", "br_paid": 1.0, "br_seo": 0.862068965517, "br_delta": 0.1, "time_paid": 2, "time_seo": 92, "time_delta": -90, "visitors_paid": 2, "visitors_seo": 28, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/per/transfert", "br_paid": 0.808510638298, "br_seo": 0.583333333333, "br_delta": 0.2, "time_paid": 48, "time_seo": 54, "time_delta": -6, "visitors_paid": 189, "visitors_seo": 26, "events_paid": 10, "events_seo": 20, "ev_visitors_paid": 2, "ev_visitors_seo": 5, "cr_paid": 1.1, "cr_seo": 19.2, "cr_delta": -18.1}, {"page": "/portefeuilles", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/portefeuilles/abonnement%20mylight", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/portefeuilles/elite", "br_paid": 0.0, "br_seo": 0.0878378378378, "br_delta": -0.1, "time_paid": 28, "time_seo": 22, "time_delta": 6, "visitors_paid": 47, "visitors_seo": 268, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/portefeuilles/essential", "br_paid": 0.0, "br_seo": 0.0545454545455, "br_delta": -0.1, "time_paid": 39, "time_seo": 26, "time_delta": 13, "visitors_paid": 70, "visitors_seo": 207, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/portefeuilles/flagship", "br_paid": 0.0, "br_seo": 0.0298507462687, "br_delta": -0.0, "time_paid": 35, "time_seo": 32, "time_delta": 3, "visitors_paid": 16, "visitors_seo": 158, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/portefeuilles/green", "br_paid": 0.0, "br_seo": 0.35, "br_delta": -0.3, "time_paid": 0, "time_seo": 43, "time_delta": -43, "visitors_paid": 1, "visitors_seo": 23, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity", "br_paid": 0.863157894737, "br_seo": 0.5, "br_delta": 0.4, "time_paid": 126, "time_seo": 88, "time_delta": 38, "visitors_paid": 113, "visitors_seo": 83, "events_paid": 3, "events_seo": 67, "ev_visitors_paid": 1, "ev_visitors_seo": 12, "cr_paid": 0.9, "cr_seo": 14.5, "cr_delta": -13.6}, {"page": "/private-equity/apport-cession-150-0-b-ter", "br_paid": 0.878706199461, "br_seo": 0.877952755906, "br_delta": 0.0, "time_paid": 90, "time_seo": 77, "time_delta": 13, "visitors_paid": 362, "visitors_seo": 244, "events_paid": 9, "events_seo": 8, "ev_visitors_paid": 3, "ev_visitors_seo": 2, "cr_paid": 0.8, "cr_seo": 0.8, "cr_delta": 0.0}, {"page": "/private-equity/apport-cession-150-0-d-ter", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/assurance-vie-ou-direct", "br_paid": 0.875, "br_seo": 0.55, "br_delta": 0.3, "time_paid": 145, "time_seo": 70, "time_delta": 75, "visitors_paid": 11, "visitors_seo": 20, "events_paid": 0, "events_seo": 4, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 10.0, "cr_delta": -10.0}, {"page": "/private-equity/barometre", "br_paid": 0, "br_seo": 0.5, "br_delta": -0.5, "time_paid": 0, "time_seo": 48, "time_delta": -48, "visitors_paid": 0, "visitors_seo": 10, "events_paid": 0, "events_seo": 42, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 10.0, "cr_delta": -10.0}, {"page": "/private-equity/barometre-private-equity-2024", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 36, "time_delta": -36, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/barometre-ramify-le-private-equity-et-les-epargnants-en-2023", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 3, "time_delta": -3, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/contruire-portefeuille-optimal-fcpi", "br_paid": 1.0, "br_seo": 0, "br_delta": 1.0, "time_paid": 2, "time_seo": 0, "time_delta": 2, "visitors_paid": 2, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/private-equity/eltif", "br_paid": 0.848837209302, "br_seo": 0.838383838384, "br_delta": 0.0, "time_paid": 80, "time_seo": 93, "time_delta": -13, "visitors_paid": 86, "visitors_seo": 100, "events_paid": 0, "events_seo": 77, "ev_visitors_paid": 0, "ev_visitors_seo": 5, "cr_paid": 0.0, "cr_seo": 5.0, "cr_delta": -5.0}, {"page": "/private-equity/eurazeo-entrepreneurs-club-ii", "br_paid": 1.0, "br_seo": 1.0, "br_delta": 0.0, "time_paid": 31, "time_seo": 13, "time_delta": 18, "visitors_paid": 4, "visitors_seo": 8, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/eurazeo-entrepreneurs-club-iii", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0, "cr_delta": 0}, {"page": "/private-equity/fcpi", "br_paid": 0.866666666667, "br_seo": 0.818181818182, "br_delta": 0.0, "time_paid": 97, "time_seo": 112, "time_delta": -15, "visitors_paid": 85, "visitors_seo": 48, "events_paid": 1, "events_seo": 1, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 1.2, "cr_seo": 2.1, "cr_delta": -0.9}, {"page": "/private-equity/fcpi-alto-innovation-2022", "br_paid": 0.75, "br_seo": 1.0, "br_delta": -0.2, "time_paid": 14, "time_seo": 38, "time_delta": -24, "visitors_paid": 4, "visitors_seo": 3, "events_paid": 1, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 25.0, "cr_seo": 0.0, "cr_delta": 25.0}, {"page": "/private-equity/fcpr", "br_paid": 0.906976744186, "br_seo": 0.909090909091, "br_delta": -0.0, "time_paid": 67, "time_seo": 57, "time_delta": 10, "visitors_paid": 49, "visitors_seo": 26, "events_paid": 0, "events_seo": 2, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 3.8, "cr_delta": -3.8}, {"page": "/private-equity/fcpr-bpifrance-entreprises-2", "br_paid": 0.8125, "br_seo": 1.0, "br_delta": -0.2, "time_paid": 52, "time_seo": 15, "time_delta": 37, "visitors_paid": 62, "visitors_seo": 5, "events_paid": 123, "events_seo": 0, "ev_visitors_paid": 3, "ev_visitors_seo": 0, "cr_paid": 4.8, "cr_seo": 0.0, "cr_delta": 4.8}, {"page": "/private-equity/fcpr-private-value-3", "br_paid": 0.705882352941, "br_seo": 0.444444444444, "br_delta": 0.3, "time_paid": 64, "time_seo": 66, "time_delta": -2, "visitors_paid": 48, "visitors_seo": 22, "events_paid": 0, "events_seo": 3, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 4.5, "cr_delta": -4.5}, {"page": "/private-equity/fip", "br_paid": 0.75, "br_seo": 0.8, "br_delta": -0.1, "time_paid": 28, "time_seo": 31, "time_delta": -3, "visitors_paid": 9, "visitors_seo": 11, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/fiscalite", "br_paid": 0.888888888889, "br_seo": 0.796116504854, "br_delta": 0.1, "time_paid": 61, "time_seo": 90, "time_delta": -29, "visitors_paid": 14, "visitors_seo": 115, "events_paid": 0, "events_seo": 26, "ev_visitors_paid": 0, "ev_visitors_seo": 6, "cr_paid": 0.0, "cr_seo": 5.2, "cr_delta": -5.2}, {"page": "/private-equity/fonds-de-fonds", "br_paid": 1.0, "br_seo": 1.0, "br_delta": 0.0, "time_paid": 7, "time_seo": 102, "time_delta": -95, "visitors_paid": 6, "visitors_seo": 19, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/fonds-evergreen", "br_paid": 0.892857142857, "br_seo": 0.777777777778, "br_delta": 0.1, "time_paid": 133, "time_seo": 88, "time_delta": 45, "visitors_paid": 34, "visitors_seo": 60, "events_paid": 0, "events_seo": 19, "ev_visitors_paid": 0, "ev_visitors_seo": 4, "cr_paid": 0.0, "cr_seo": 6.7, "cr_delta": -6.7}, {"page": "/private-equity/fonds-semi-liquide", "br_paid": 0.0, "br_seo": 0.826086956522, "br_delta": -0.8, "time_paid": 240, "time_seo": 24, "time_delta": 216, "visitors_paid": 1, "visitors_seo": 25, "events_paid": 0, "events_seo": 59, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 8.0, "cr_delta": -8.0}, {"page": "/private-equity/fpci", "br_paid": 0.739130434783, "br_seo": 0.794871794872, "br_delta": -0.1, "time_paid": 42, "time_seo": 75, "time_delta": -33, "visitors_paid": 27, "visitors_seo": 43, "events_paid": 3, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 7.4, "cr_seo": 0.0, "cr_delta": 7.4}, {"page": "/private-equity/growth", "br_paid": 0.0, "br_seo": 0.75, "br_delta": -0.8, "time_paid": 0, "time_seo": 105, "time_delta": -105, "visitors_paid": 0, "visitors_seo": 17, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/guide-private-debt", "br_paid": 0.896551724138, "br_seo": 0.794392523364, "br_delta": 0.1, "time_paid": 55, "time_seo": 108, "time_delta": -53, "visitors_paid": 30, "visitors_seo": 112, "events_paid": 8, "events_seo": 14, "ev_visitors_paid": 1, "ev_visitors_seo": 3, "cr_paid": 3.3, "cr_seo": 2.7, "cr_delta": 0.6}, {"page": "/private-equity/infrastructure", "br_paid": 1.0, "br_seo": 0.738095238095, "br_delta": 0.3, "time_paid": 62, "time_seo": 102, "time_delta": -40, "visitors_paid": 2, "visitors_seo": 50, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/leveraged-buy-out", "br_paid": 0.87037037037, "br_seo": 0.829268292683, "br_delta": 0.0, "time_paid": 82, "time_seo": 50, "time_delta": 32, "visitors_paid": 49, "visitors_seo": 42, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/marche", "br_paid": 0.894736842105, "br_seo": 0.756097560976, "br_delta": 0.1, "time_paid": 136, "time_seo": 105, "time_delta": 31, "visitors_paid": 19, "visitors_seo": 82, "events_paid": 5, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 5.3, "cr_seo": 0.0, "cr_delta": 5.3}, {"page": "/private-equity/meilleurs-fcpi", "br_paid": 0.0, "br_seo": 0.941176470588, "br_delta": -0.9, "time_paid": 46, "time_seo": 32, "time_delta": 14, "visitors_paid": 5, "visitors_seo": 27, "events_paid": 0, "events_seo": 2, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 3.7, "cr_delta": -3.7}, {"page": "/private-equity/meilleurs-fcpr", "br_paid": 0.90625, "br_seo": 0.790697674419, "br_delta": 0.1, "time_paid": 122, "time_seo": 151, "time_delta": -29, "visitors_paid": 46, "visitors_seo": 150, "events_paid": 0, "events_seo": 27, "ev_visitors_paid": 0, "ev_visitors_seo": 5, "cr_paid": 0.0, "cr_seo": 3.3, "cr_delta": -3.3}, {"page": "/private-equity/meilleurs-fonds", "br_paid": 0.71, "br_seo": 0.75, "br_delta": -0.0, "time_paid": 67, "time_seo": 71, "time_delta": -4, "visitors_paid": 110, "visitors_seo": 319, "events_paid": 53, "events_seo": 23, "ev_visitors_paid": 3, "ev_visitors_seo": 8, "cr_paid": 2.7, "cr_seo": 2.5, "cr_delta": 0.2}, {"page": "/private-equity/meilleurs-fonds-evergreen", "br_paid": 0.630434782609, "br_seo": 0.688995215311, "br_delta": -0.1, "time_paid": 68, "time_seo": 105, "time_delta": -37, "visitors_paid": 46, "visitors_seo": 209, "events_paid": 21, "events_seo": 26, "ev_visitors_paid": 4, "ev_visitors_seo": 9, "cr_paid": 8.7, "cr_seo": 4.3, "cr_delta": 4.4}, {"page": "/private-equity/meilleurs-fpci", "br_paid": 0.818181818182, "br_seo": 0.75, "br_delta": 0.1, "time_paid": 147, "time_seo": 103, "time_delta": 44, "visitors_paid": 25, "visitors_seo": 92, "events_paid": 1, "events_seo": 16, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 2.2, "cr_delta": -2.2}, {"page": "/private-equity/multifonds-archinvest-lbo1", "br_paid": 1.0, "br_seo": 0.875, "br_delta": 0.1, "time_paid": 66, "time_seo": 12, "time_delta": 54, "visitors_paid": 3, "visitors_seo": 8, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/performance-vs-fiscal", "br_paid": 0, "br_seo": 0.25, "br_delta": -0.2, "time_paid": 0, "time_seo": 4, "time_delta": -4, "visitors_paid": 0, "visitors_seo": 13, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/ramify-private-equity-index-rpei-analyse-des-performances-au-t1-2025", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 191, "time_delta": -191, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 2, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 100.0, "cr_delta": -100.0}, {"page": "/private-equity/ramify-private-equity-index-rpei-analyse-des-performances-au-t3-2024", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 5, "time_delta": -5, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/re-up", "br_paid": 0.5, "br_seo": 0.694444444444, "br_delta": -0.2, "time_paid": 35, "time_seo": 118, "time_delta": -83, "visitors_paid": 2, "visitors_seo": 36, "events_paid": 0, "events_seo": 5, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 2.8, "cr_delta": -2.8}, {"page": "/private-equity/rpei-methodologie", "br_paid": 0, "br_seo": 0.5, "br_delta": -0.5, "time_paid": 0, "time_seo": 12, "time_delta": -12, "visitors_paid": 0, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/rpei-performances", "br_paid": 0.0, "br_seo": 0.428571428571, "br_delta": -0.4, "time_paid": 12, "time_seo": 60, "time_delta": -48, "visitors_paid": 1, "visitors_seo": 9, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/rpei-performances-t1-2024", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 1, "time_delta": -1, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/rpei-performances-t2-2024", "br_paid": 0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 22, "time_delta": -22, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/private-equity/secondaire", "br_paid": 1.0, "br_seo": 0.722222222222, "br_delta": 0.3, "time_paid": 94, "time_seo": 180, "time_delta": -86, "visitors_paid": 7, "visitors_seo": 20, "events_paid": 0, "events_seo": 32, "ev_visitors_paid": 0, "ev_visitors_seo": 3, "cr_paid": 0.0, "cr_seo": 15.0, "cr_delta": -15.0}, {"page": "/private-equity/selection-fonds-private-equity", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 4, "time_seo": 36, "time_delta": -32, "visitors_paid": 1, "visitors_seo": 9, "events_paid": 0, "events_seo": 4, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 11.1, "cr_delta": -11.1}, {"page": "/private-equity/venture-capital", "br_paid": 1.0, "br_seo": 0.903846153846, "br_delta": 0.1, "time_paid": 61, "time_seo": 78, "time_delta": -17, "visitors_paid": 15, "visitors_seo": 50, "events_paid": 0, "events_seo": 5, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 2.0, "cr_delta": -2.0}, {"page": "/produits-structures", "br_paid": 0.848214285714, "br_seo": 0.0, "br_delta": 0.8, "time_paid": 86, "time_seo": 81, "time_delta": 5, "visitors_paid": 237, "visitors_seo": 35, "events_paid": 82, "events_seo": 8, "ev_visitors_paid": 8, "ev_visitors_seo": 3, "cr_paid": 3.4, "cr_seo": 8.6, "cr_delta": -5.2}, {"page": "/produits-structures/meilleurs", "br_paid": 0.848920863309, "br_seo": 0.830275229358, "br_delta": 0.0, "time_paid": 86, "time_seo": 73, "time_delta": 13, "visitors_paid": 138, "visitors_seo": 425, "events_paid": 38, "events_seo": 210, "ev_visitors_paid": 8, "ev_visitors_seo": 19, "cr_paid": 5.8, "cr_seo": 4.5, "cr_delta": 1.3}, {"page": "/scpi", "br_paid": 0.890625, "br_seo": 0.166666666667, "br_delta": 0.7, "time_paid": 117, "time_seo": 116, "time_delta": 1, "visitors_paid": 81, "visitors_seo": 24, "events_paid": 1, "events_seo": 1, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 1.2, "cr_seo": 4.2, "cr_delta": -3.0}, {"page": "/scpi/assurance-vie-ou-direct", "br_paid": 0.785234899329, "br_seo": 0.272727272727, "br_delta": 0.5, "time_paid": 106, "time_seo": 59, "time_delta": 47, "visitors_paid": 153, "visitors_seo": 17, "events_paid": 44, "events_seo": 8, "ev_visitors_paid": 6, "ev_visitors_seo": 2, "cr_paid": 3.9, "cr_seo": 11.8, "cr_delta": -7.9}, {"page": "/scpi/comment-choisir", "br_paid": 1.0, "br_seo": 0.636363636364, "br_delta": 0.4, "time_paid": 45, "time_seo": 53, "time_delta": -8, "visitors_paid": 13, "visitors_seo": 12, "events_paid": 0, "events_seo": 21, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 16.7, "cr_delta": -16.7}, {"page": "/scpi/demembrement-pleine-propriete", "br_paid": 0.888888888889, "br_seo": 0.909090909091, "br_delta": -0.0, "time_paid": 90, "time_seo": 56, "time_delta": 34, "visitors_paid": 11, "visitors_seo": 24, "events_paid": 1, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 9.1, "cr_seo": 0.0, "cr_delta": 9.1}, {"page": "/scpi/fiscalite", "br_paid": 0.786516853933, "br_seo": 0.896551724138, "br_delta": -0.1, "time_paid": 137, "time_seo": 113, "time_delta": 24, "visitors_paid": 175, "visitors_seo": 27, "events_paid": 31, "events_seo": 0, "ev_visitors_paid": 6, "ev_visitors_seo": 0, "cr_paid": 3.4, "cr_seo": 0.0, "cr_delta": 3.4}, {"page": "/scpi/fiscalite-des-scpi-internationales", "br_paid": 0.83185840708, "br_seo": 0.657142857143, "br_delta": 0.2, "time_paid": 69, "time_seo": 105, "time_delta": -36, "visitors_paid": 111, "visitors_seo": 31, "events_paid": 10, "events_seo": 1, "ev_visitors_paid": 2, "ev_visitors_seo": 1, "cr_paid": 1.8, "cr_seo": 3.2, "cr_delta": -1.4}, {"page": "/scpi/frais", "br_paid": 0.914285714286, "br_seo": 0.75, "br_delta": 0.2, "time_paid": 114, "time_seo": 100, "time_delta": 14, "visitors_paid": 115, "visitors_seo": 18, "events_paid": 3, "events_seo": 4, "ev_visitors_paid": 2, "ev_visitors_seo": 1, "cr_paid": 1.7, "cr_seo": 5.6, "cr_delta": -3.9}, {"page": "/scpi/meilleures", "br_paid": 0.78612716763, "br_seo": 0.307692307692, "br_delta": 0.5, "time_paid": 97, "time_seo": 93, "time_delta": 4, "visitors_paid": 189, "visitors_seo": 24, "events_paid": 19, "events_seo": 0, "ev_visitors_paid": 6, "ev_visitors_seo": 0, "cr_paid": 3.2, "cr_seo": 0.0, "cr_delta": 3.2}, {"page": "/scpi/nue-propriete", "br_paid": 0.830769230769, "br_seo": 0.666666666667, "br_delta": 0.2, "time_paid": 167, "time_seo": 157, "time_delta": 10, "visitors_paid": 66, "visitors_seo": 10, "events_paid": 3, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 1.5, "cr_seo": 0.0, "cr_delta": 1.5}, {"page": "/scpi/ou-crowdfunding-immobilier", "br_paid": 0.888888888889, "br_seo": 1.0, "br_delta": -0.1, "time_paid": 43, "time_seo": 84, "time_delta": -41, "visitors_paid": 9, "visitors_seo": 2, "events_paid": 11, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 11.1, "cr_seo": 0.0, "cr_delta": 11.1}, {"page": "/scpi/ou-opci", "br_paid": 0.857142857143, "br_seo": 1.0, "br_delta": -0.1, "time_paid": 118, "time_seo": 18, "time_delta": 100, "visitors_paid": 39, "visitors_seo": 2, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/scpi/ou-sci", "br_paid": 0.945454545455, "br_seo": 1.0, "br_delta": -0.1, "time_paid": 124, "time_seo": 21, "time_delta": 103, "visitors_paid": 55, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/scpi/pleine-propriete", "br_paid": 0.857142857143, "br_seo": 0.636363636364, "br_delta": 0.2, "time_paid": 107, "time_seo": 63, "time_delta": 44, "visitors_paid": 7, "visitors_seo": 11, "events_paid": 0, "events_seo": 5, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0.0, "cr_seo": 18.2, "cr_delta": -18.2}, {"page": "/scpi/ramify-scpi-index-rscpi", "br_paid": 0.0, "br_seo": 0.583333333333, "br_delta": -0.6, "time_paid": 0, "time_seo": 35, "time_delta": -35, "visitors_paid": 0, "visitors_seo": 16, "events_paid": 0, "events_seo": 6, "ev_visitors_paid": 0, "ev_visitors_seo": 2, "cr_paid": 0, "cr_seo": 12.5, "cr_delta": -12.5}, {"page": "/scpi/ramify-scpi-index-rscpi-analyse-du-t3-2025", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 11, "time_seo": 48, "time_delta": -37, "visitors_paid": 2, "visitors_seo": 6, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/scpi/remake-live", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 67, "time_seo": 0, "time_delta": 67, "visitors_paid": 1, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0, "cr_delta": 0.0}, {"page": "/scpi/rscpi-bilan-2024-perspectives-2025", "br_paid": 0.0, "br_seo": 1.0, "br_delta": -1.0, "time_paid": 0, "time_seo": 40, "time_delta": -40, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/scpi/rscpi-performances", "br_paid": 0.0, "br_seo": 0.333333333333, "br_delta": -0.3, "time_paid": 73, "time_seo": 31, "time_delta": 42, "visitors_paid": 5, "visitors_seo": 35, "events_paid": 0, "events_seo": 18, "ev_visitors_paid": 0, "ev_visitors_seo": 3, "cr_paid": 0.0, "cr_seo": 8.6, "cr_delta": -8.6}, {"page": "/scpi/rscpi-t1-2025", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0, "cr_delta": 0}, {"page": "/scpi/rscpi-t2-2025", "br_paid": 0, "br_seo": 0.5, "br_delta": -0.5, "time_paid": 0, "time_seo": 10, "time_delta": -10, "visitors_paid": 0, "visitors_seo": 2, "events_paid": 0, "events_seo": 4, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0, "cr_seo": 50.0, "cr_delta": -50.0}, {"page": "/scpi/scpi-a-capital-variable-vs-capital-fixe", "br_paid": 0.913580246914, "br_seo": 0.75, "br_delta": 0.2, "time_paid": 67, "time_seo": 100, "time_delta": -33, "visitors_paid": 80, "visitors_seo": 5, "events_paid": 13, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 1.2, "cr_seo": 0.0, "cr_delta": 1.2}, {"page": "/scpi/scpi-a-credit", "br_paid": 1.0, "br_seo": 0.526315789474, "br_delta": 0.5, "time_paid": 87, "time_seo": 54, "time_delta": 33, "visitors_paid": 10, "visitors_seo": 19, "events_paid": 0, "events_seo": 11, "ev_visitors_paid": 0, "ev_visitors_seo": 4, "cr_paid": 0.0, "cr_seo": 21.1, "cr_delta": -21.1}, {"page": "/scpi/scpi-credit-vs-versements-programmes", "br_paid": 0.8, "br_seo": 0.666666666667, "br_delta": 0.1, "time_paid": 44, "time_seo": 25, "time_delta": 19, "visitors_paid": 7, "visitors_seo": 3, "events_paid": 3, "events_seo": 1, "ev_visitors_paid": 1, "ev_visitors_seo": 1, "cr_paid": 14.3, "cr_seo": 33.3, "cr_delta": -19.0}, {"page": "/scpi/scpi-de-capitalisation", "br_paid": 0.75, "br_seo": 1.0, "br_delta": -0.2, "time_paid": 53, "time_seo": 2, "time_delta": 51, "visitors_paid": 7, "visitors_seo": 3, "events_paid": 4, "events_seo": 0, "ev_visitors_paid": 1, "ev_visitors_seo": 0, "cr_paid": 14.3, "cr_seo": 0.0, "cr_delta": 14.3}, {"page": "/scpi/scpi-de-rendement", "br_paid": 1.0, "br_seo": 0.0, "br_delta": 1.0, "time_paid": 44, "time_seo": 99, "time_delta": -55, "visitors_paid": 6, "visitors_seo": 6, "events_paid": 0, "events_seo": 5, "ev_visitors_paid": 0, "ev_visitors_seo": 1, "cr_paid": 0.0, "cr_seo": 16.7, "cr_delta": -16.7}, {"page": "/scpi/scpi-fiscales", "br_paid": 0.642857142857, "br_seo": 0.0, "br_delta": 0.6, "time_paid": 70, "time_seo": 47, "time_delta": 23, "visitors_paid": 14, "visitors_seo": 1, "events_paid": 5, "events_seo": 0, "ev_visitors_paid": 2, "ev_visitors_seo": 0, "cr_paid": 14.3, "cr_seo": 0.0, "cr_delta": 14.3}, {"page": "/scpi/sortir-d-un-investissement-en-scpi", "br_paid": 0.869047619048, "br_seo": 0.857142857143, "br_delta": 0.0, "time_paid": 69, "time_seo": 46, "time_delta": 23, "visitors_paid": 335, "visitors_seo": 31, "events_paid": 14, "events_seo": 1, "ev_visitors_paid": 4, "ev_visitors_seo": 1, "cr_paid": 1.2, "cr_seo": 3.2, "cr_delta": -2.0}, {"page": "/scpi/succession", "br_paid": 0.820512820513, "br_seo": 0.886363636364, "br_delta": -0.1, "time_paid": 154, "time_seo": 205, "time_delta": -51, "visitors_paid": 162, "visitors_seo": 44, "events_paid": 30, "events_seo": 2, "ev_visitors_paid": 3, "ev_visitors_seo": 1, "cr_paid": 1.9, "cr_seo": 2.3, "cr_delta": -0.4}, {"page": "/scpi/tout-sur-la-fiscalite-des-scpi", "br_paid": 0.0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 4, "time_seo": 11, "time_delta": -7, "visitors_paid": 2, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0.0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/simulateur-pea", "br_paid": 0.0, "br_seo": 0, "br_delta": 0.0, "time_paid": 0, "time_seo": 0, "time_delta": 0, "visitors_paid": 0, "visitors_seo": 0, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0, "cr_delta": 0}, {"page": "/tf-monetaire-en-eur", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 20, "time_delta": -20, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/wealth-ramifytour", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 2, "time_delta": -2, "visitors_paid": 0, "visitors_seo": 1, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}, {"page": "/wealth-tour", "br_paid": 0.0, "br_seo": 0.533333333333, "br_delta": -0.5, "time_paid": 0, "time_seo": 70, "time_delta": -70, "visitors_paid": 0, "visitors_seo": 48, "events_paid": 0, "events_seo": 17, "ev_visitors_paid": 0, "ev_visitors_seo": 3, "cr_paid": 0, "cr_seo": 6.2, "cr_delta": -6.2}, {"page": "/wealth-tour-2027", "br_paid": 0, "br_seo": 0.0, "br_delta": 0.0, "time_paid": 0, "time_seo": 4, "time_delta": -4, "visitors_paid": 0, "visitors_seo": 4, "events_paid": 0, "events_seo": 0, "ev_visitors_paid": 0, "ev_visitors_seo": 0, "cr_paid": 0, "cr_seo": 0.0, "cr_delta": 0.0}]};
+
+let pages = DATA.pages;
+let sortCol = 'visitors';
+let sortDir = -1;
+
+function avg(arr, key) {
+  if (!arr.length) return 0;
+  return arr.reduce((s, p) => s + p[key], 0) / arr.length;
+}
+
+function sum(arr, key) {
+  return arr.reduce((s, p) => s + p[key], 0);
+}
+
+function renderKPIs(filtered) {
+  const seoLowerBR = filtered.filter(p => p.br_seo < p.br_paid && p.visitors_seo > 0 && p.visitors_paid > 0).length;
+  const paidLowerBR = filtered.filter(p => p.br_paid < p.br_seo && p.visitors_seo > 0 && p.visitors_paid > 0).length;
+  const seoHigherTime = filtered.filter(p => p.time_seo > p.time_paid && p.visitors_seo > 0 && p.visitors_paid > 0).length;
+  const paidHigherTime = filtered.filter(p => p.time_paid > p.time_seo && p.visitors_seo > 0 && p.visitors_paid > 0).length;
+
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi">
+      <div class="kpi-label">Avg Bounce Rate</div>
+      <div class="kpi-values">
+        <div class="kpi-group"><div class="kpi-val paid">${avg(filtered, 'br_paid').toFixed(1)}%</div><div class="kpi-channel">Paid</div></div>
+        <span class="vs">vs</span>
+        <div class="kpi-group"><div class="kpi-val seo">${avg(filtered, 'br_seo').toFixed(1)}%</div><div class="kpi-channel">SEO</div></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Avg Time on Page</div>
+      <div class="kpi-values">
+        <div class="kpi-group"><div class="kpi-val paid">${avg(filtered, 'time_paid').toFixed(0)}s</div><div class="kpi-channel">Paid</div></div>
+        <span class="vs">vs</span>
+        <div class="kpi-group"><div class="kpi-val seo">${avg(filtered, 'time_seo').toFixed(0)}s</div><div class="kpi-channel">SEO</div></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Lower Bounce Rate wins</div>
+      <div class="kpi-values">
+        <div class="kpi-group"><div class="kpi-val paid">${paidLowerBR}</div><div class="kpi-channel">Paid</div></div>
+        <span class="vs">vs</span>
+        <div class="kpi-group"><div class="kpi-val seo">${seoLowerBR}</div><div class="kpi-channel">SEO</div></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Higher Time on Page wins</div>
+      <div class="kpi-values">
+        <div class="kpi-group"><div class="kpi-val paid">${paidHigherTime}</div><div class="kpi-channel">Paid</div></div>
+        <span class="vs">vs</span>
+        <div class="kpi-group"><div class="kpi-val seo">${seoHigherTime}</div><div class="kpi-channel">SEO</div></div>
+      </div>
+    </div>
+  `;
+
+  // Conversion KPIs
+  const withEvents = filtered.filter(p => p.events_paid > 0 || p.events_seo > 0);
+  const totalEventsPaid = sum(filtered, 'events_paid');
+  const totalEventsSeo = sum(filtered, 'events_seo');
+  const totalVisPaid = sum(filtered, 'visitors_paid');
+  const totalVisSeo = sum(filtered, 'visitors_seo');
+  const totalEvVisPaid = sum(filtered, 'ev_visitors_paid');
+  const totalEvVisSeo = sum(filtered, 'ev_visitors_seo');
+  const globalCrPaid = totalVisPaid > 0 ? (totalEvVisPaid / totalVisPaid * 100).toFixed(1) : '0.0';
+  const globalCrSeo = totalVisSeo > 0 ? (totalEvVisSeo / totalVisSeo * 100).toFixed(1) : '0.0';
+  const paidHigherCR = filtered.filter(p => p.cr_paid > p.cr_seo && p.ev_visitors_paid > 0 && p.ev_visitors_seo > 0).length;
+  const seoHigherCR = filtered.filter(p => p.cr_seo > p.cr_paid && p.ev_visitors_paid > 0 && p.ev_visitors_seo > 0).length;
+
+  document.getElementById('convKpis').innerHTML = `
+    <div class="kpi">
+      <div class="kpi-label">Total Events</div>
+      <div class="kpi-values">
+        <div class="kpi-group"><div class="kpi-val paid">${totalEventsPaid.toLocaleString()}</div><div class="kpi-channel">Paid</div></div>
+        <span class="vs">vs</span>
+        <div class="kpi-group"><div class="kpi-val seo">${totalEventsSeo.toLocaleString()}</div><div class="kpi-channel">SEO</div></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Global Conv. Rate</div>
+      <div class="kpi-values">
+        <div class="kpi-group"><div class="kpi-val paid">${globalCrPaid}%</div><div class="kpi-channel">Paid</div></div>
+        <span class="vs">vs</span>
+        <div class="kpi-group"><div class="kpi-val seo">${globalCrSeo}%</div><div class="kpi-channel">SEO</div></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Higher Conv. Rate wins</div>
+      <div class="kpi-values">
+        <div class="kpi-group"><div class="kpi-val paid">${paidHigherCR}</div><div class="kpi-channel">Paid</div></div>
+        <span class="vs">vs</span>
+        <div class="kpi-group"><div class="kpi-val seo">${seoHigherCR}</div><div class="kpi-channel">SEO</div></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Pages with Events</div>
+      <div class="kpi-values">
+        <div class="kpi-group"><div class="kpi-val" style="color: var(--conversion)">${withEvents.length}</div><div class="kpi-channel">of ${filtered.length}</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function getFiltered() {
+  const query = document.getElementById('filterInput').value.toLowerCase();
+  const minVis = parseInt(document.getElementById('minVisitors').value);
+  return pages.filter(p => {
+    if (query && !p.page.toLowerCase().includes(query)) return false;
+    if ((p.visitors_paid + p.visitors_seo) < minVis) return false;
+    return true;
+  });
+}
+
+function getSorted(filtered) {
+  return [...filtered].sort((a, b) => {
+    let va, vb;
+    if (sortCol === 'visitors') { va = a.visitors_paid + a.visitors_seo; vb = b.visitors_paid + b.visitors_seo; }
+    else if (sortCol === 'page') { va = a.page; vb = b.page; return sortDir * va.localeCompare(vb); }
+    else { va = a[sortCol]; vb = b[sortCol]; }
+    return sortDir * (vb - va);
+  });
+}
+
+function deltaTag(val, unit, invert) {
+  const sign = val > 0 ? '+' : '';
+  let cls = 'neutral';
+  if (invert) {
+    if (val < -1) cls = 'positive';
+    else if (val > 1) cls = 'negative';
+  } else {
+    if (val > 5) cls = 'positive';
+    else if (val < -5) cls = 'negative';
+  }
+  return `<span class="tag ${cls}">${sign}${val}${unit}</span>`;
+}
+
+function crDeltaTag(val) {
+  const sign = val > 0 ? '+' : '';
+  let cls = 'neutral';
+  if (val > 1) cls = 'positive';
+  else if (val < -1) cls = 'negative';
+  return `<span class="tag ${cls}">${sign}${val}pp</span>`;
+}
+
+function renderTable(sorted) {
+  document.getElementById('pageCount').textContent = sorted.length + ' pages';
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = sorted.map(p => `
+    <tr>
+      <td class="page-cell" title="${p.page}">${p.page}</td>
+      <td>${p.br_paid}%</td>
+      <td>${p.br_seo}%</td>
+      <td>${deltaTag(p.br_delta, 'pp', true)}</td>
+      <td>${p.time_paid}s</td>
+      <td>${p.time_seo}s</td>
+      <td>${deltaTag(p.time_delta, 's', false)}</td>
+      <td>${p.events_paid.toLocaleString()}</td>
+      <td>${p.events_seo.toLocaleString()}</td>
+      <td>${p.cr_paid}%</td>
+      <td>${p.cr_seo}%</td>
+      <td>${crDeltaTag(p.cr_delta)}</td>
+      <td>${p.visitors_paid.toLocaleString()}</td>
+      <td>${p.visitors_seo.toLocaleString()}</td>
+    </tr>
+  `).join('');
+}
+
+let bounceChart, timeChart, convChart, evVsVisChart, topPaidChart, topSeoChart;
+
+function renderCharts(filtered) {
+  const bubbleData = (xKey, yKey) => filtered
+    .filter(p => p.visitors_paid > 0 && p.visitors_seo > 0)
+    .map(p => ({ x: p[xKey], y: p[yKey], label: p.page, r: Math.max(3, Math.sqrt(p.visitors_paid + p.visitors_seo) / 2) }));
+
+  const scatterOpts = (xLabel, yLabel, unit) => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1c1f28',
+        borderColor: '#2a2d38',
+        borderWidth: 1,
+        titleFont: { family: 'DM Sans', size: 12 },
+        bodyFont: { family: 'JetBrains Mono', size: 11 },
+        callbacks: {
+          title: items => items[0]?.raw?.label || '',
+          label: item => `${xLabel}: ${item.raw.x}${unit}  |  ${yLabel}: ${item.raw.y}${unit}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        title: { display: true, text: xLabel, color: '#3ea5f0', font: { family: 'DM Sans', size: 12 } },
+        ticks: { color: '#8b8f9e', font: { family: 'JetBrains Mono', size: 10 } },
+        grid: { color: 'rgba(42,45,56,0.5)' }
+      },
+      y: {
+        title: { display: true, text: yLabel, color: '#f07c3e', font: { family: 'DM Sans', size: 12 } },
+        ticks: { color: '#8b8f9e', font: { family: 'JetBrains Mono', size: 10 } },
+        grid: { color: 'rgba(42,45,56,0.5)' }
+      }
+    }
+  });
+
+  const diagonalPlugin = {
+    id: 'diagonal',
+    afterDraw(chart) {
+      const { ctx, scales: { x, y } } = chart;
+      const min = Math.max(x.min, y.min);
+      const max = Math.min(x.max, y.max);
+      ctx.save();
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = 'rgba(139,143,158,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x.getPixelForValue(min), y.getPixelForValue(min));
+      ctx.lineTo(x.getPixelForValue(max), y.getPixelForValue(max));
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  // Destroy existing charts
+  [bounceChart, timeChart, convChart, evVsVisChart, topPaidChart, topSeoChart].forEach(c => c && c.destroy());
+
+  // Bounce rate scatter
+  bounceChart = new Chart(document.getElementById('bounceScatter'), {
+    type: 'bubble',
+    data: { datasets: [{ data: bubbleData('br_seo', 'br_paid'), backgroundColor: 'rgba(240, 124, 62, 0.35)', borderColor: 'rgba(240, 124, 62, 0.7)', borderWidth: 1 }] },
+    options: scatterOpts('SEO', 'Paid', '%'),
+    plugins: [diagonalPlugin]
+  });
+
+  // Time on page scatter
+  timeChart = new Chart(document.getElementById('timeScatter'), {
+    type: 'bubble',
+    data: { datasets: [{ data: bubbleData('time_seo', 'time_paid'), backgroundColor: 'rgba(62, 165, 240, 0.35)', borderColor: 'rgba(62, 165, 240, 0.7)', borderWidth: 1 }] },
+    options: scatterOpts('SEO', 'Paid', 's'),
+    plugins: [diagonalPlugin]
+  });
+
+  // Conversion rate scatter
+  const convData = filtered
+    .filter(p => p.ev_visitors_paid > 0 && p.ev_visitors_seo > 0)
+    .map(p => ({ x: p.cr_seo, y: p.cr_paid, label: p.page, r: Math.max(3, Math.sqrt(p.events_paid + p.events_seo) / 1.5) }));
+
+  convChart = new Chart(document.getElementById('convScatter'), {
+    type: 'bubble',
+    data: { datasets: [{ data: convData, backgroundColor: 'rgba(167, 139, 250, 0.35)', borderColor: 'rgba(167, 139, 250, 0.7)', borderWidth: 1 }] },
+    options: scatterOpts('SEO', 'Paid', '%'),
+    plugins: [diagonalPlugin]
+  });
+
+  // Events vs Visitors scatter
+  const paidScatter = filtered.filter(p => p.ev_visitors_paid > 0).map(p => ({ x: p.ev_visitors_paid, y: p.events_paid, label: p.page }));
+  const seoScatter = filtered.filter(p => p.ev_visitors_seo > 0).map(p => ({ x: p.ev_visitors_seo, y: p.events_seo, label: p.page }));
+
+  evVsVisChart = new Chart(document.getElementById('eventsVsVisitors'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Paid', data: paidScatter, backgroundColor: 'rgba(240, 124, 62, 0.5)', borderColor: 'rgba(240, 124, 62, 0.8)', pointRadius: 5 },
+        { label: 'SEO', data: seoScatter, backgroundColor: 'rgba(62, 165, 240, 0.5)', borderColor: 'rgba(62, 165, 240, 0.8)', pointRadius: 5 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#8b8f9e', font: { family: 'DM Sans', size: 11 } } },
+        tooltip: {
+          backgroundColor: '#1c1f28',
+          borderColor: '#2a2d38',
+          borderWidth: 1,
+          titleFont: { family: 'DM Sans', size: 12 },
+          bodyFont: { family: 'JetBrains Mono', size: 11 },
+          callbacks: {
+            title: items => items[0]?.raw?.label || '',
+            label: item => `Visitors: ${item.raw.x} | Events: ${item.raw.y}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Visitors', color: '#8b8f9e', font: { family: 'DM Sans', size: 12 } },
+          ticks: { color: '#8b8f9e', font: { family: 'JetBrains Mono', size: 10 } },
+          grid: { color: 'rgba(42,45,56,0.5)' }
+        },
+        y: {
+          title: { display: true, text: 'Events', color: '#8b8f9e', font: { family: 'DM Sans', size: 12 } },
+          ticks: { color: '#8b8f9e', font: { family: 'JetBrains Mono', size: 10 } },
+          grid: { color: 'rgba(42,45,56,0.5)' }
+        }
+      }
+    }
+  });
+
+  // Top 20 pages by events - Paid
+  const topPaid = [...filtered].sort((a, b) => b.events_paid - a.events_paid).slice(0, 20);
+  const shortLabel = p => p.page.split('/').slice(-1)[0] || p.page.split('/').slice(-2)[0] || p.page;
+
+  topPaidChart = new Chart(document.getElementById('topEventsPaid'), {
+    type: 'bar',
+    data: {
+      labels: topPaid.map(p => shortLabel(p)),
+      datasets: [{
+        data: topPaid.map(p => p.events_paid),
+        backgroundColor: 'rgba(240, 124, 62, 0.6)',
+        borderColor: 'rgba(240, 124, 62, 0.9)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1c1f28',
+          borderColor: '#2a2d38',
+          borderWidth: 1,
+          titleFont: { family: 'DM Sans', size: 12 },
+          bodyFont: { family: 'JetBrains Mono', size: 11 },
+          callbacks: {
+            title: items => topPaid[items[0].dataIndex]?.page || '',
+            label: item => `${item.raw} events (CR: ${topPaid[item.dataIndex].cr_paid}%)`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#8b8f9e', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(42,45,56,0.5)' } },
+        y: { ticks: { color: '#8b8f9e', font: { family: 'DM Sans', size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Top 20 pages by events - SEO
+  const topSeo = [...filtered].sort((a, b) => b.events_seo - a.events_seo).slice(0, 20);
+
+  topSeoChart = new Chart(document.getElementById('topEventsSeo'), {
+    type: 'bar',
+    data: {
+      labels: topSeo.map(p => shortLabel(p)),
+      datasets: [{
+        data: topSeo.map(p => p.events_seo),
+        backgroundColor: 'rgba(62, 165, 240, 0.6)',
+        borderColor: 'rgba(62, 165, 240, 0.9)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1c1f28',
+          borderColor: '#2a2d38',
+          borderWidth: 1,
+          titleFont: { family: 'DM Sans', size: 12 },
+          bodyFont: { family: 'JetBrains Mono', size: 11 },
+          callbacks: {
+            title: items => topSeo[items[0].dataIndex]?.page || '',
+            label: item => `${item.raw} events (CR: ${topSeo[item.dataIndex].cr_seo}%)`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#8b8f9e', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(42,45,56,0.5)' } },
+        y: { ticks: { color: '#8b8f9e', font: { family: 'DM Sans', size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function update() {
+  const filtered = getFiltered();
+  const sorted = getSorted(filtered);
+  renderKPIs(filtered);
+  renderTable(sorted);
+  renderCharts(filtered);
+}
+
+// Sort headers
+document.querySelectorAll('thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) sortDir *= -1;
+    else { sortCol = col; sortDir = -1; }
+    document.querySelectorAll('thead th').forEach(t => t.classList.remove('sorted'));
+    th.classList.add('sorted');
+    update();
+  });
+});
+
+document.getElementById('sortSelect').addEventListener('change', e => { sortCol = e.target.value; sortDir = -1; update(); });
+document.getElementById('filterInput').addEventListener('input', update);
+document.getElementById('minVisitors').addEventListener('change', update);
+
+update();
+</script>
+</body>
+</html>
