@@ -303,7 +303,7 @@
     border-radius: 10px;
     padding: 28px 32px;
     margin-bottom: 32px;
-    max-width: 860px;
+    max-width: 100%;
   }
 
   .analysis h2 {
@@ -315,27 +315,27 @@
 
   .analysis .findings-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
     margin-bottom: 20px;
   }
 
   .analysis .finding {
     background: var(--surface-2);
     border-radius: 8px;
-    padding: 16px 18px;
-    line-height: 1.65;
+    padding: 18px 20px;
+    line-height: 1.7;
   }
 
   .analysis .finding-title {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text);
     margin-bottom: 6px;
   }
 
   .analysis .finding-body {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
   }
 
@@ -345,7 +345,7 @@
   .analysis .conv-hl { color: var(--conversion); font-weight: 600; }
 
   .analysis .note {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
     border-left: 2px solid var(--border);
     padding-left: 12px;
@@ -360,7 +360,7 @@
   }
 
   .analysis .top-list h3 {
-    font-size: 11px;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.6px;
     color: var(--text-muted);
@@ -370,13 +370,17 @@
 
   .analysis .top-list ol {
     padding-left: 18px;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
     font-family: 'JetBrains Mono', monospace;
   }
 
   .analysis .top-list ol li { margin-bottom: 3px; }
   .analysis .top-list ol li span.cr { font-weight: 500; }
+
+  @media (max-width: 1200px) {
+    .analysis .findings-grid { grid-template-columns: 1fr 1fr; }
+  }
 
   @media (max-width: 900px) {
     .analysis .findings-grid { grid-template-columns: 1fr; }
